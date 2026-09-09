@@ -1,121 +1,228 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useState } from "react";
+import Header from "./components/Header";
+import CodeEditor from "./components/CodeEditor";
+import ReviewSummary from "./components/ReviewSummary";
+import MetricsDashboard from "./components/MetricsDashboard";
+import FindingsExplorer, { Finding } from "./components/FindingsExplorer";
+import RefactoringDiff from "./components/RefactoringDiff";
 
-interface HealthStatus {
-  status: string;
-  app_name: string;
-  version: string;
-  environment: string;
-  timestamp: string;
-}
+const DEFAULT_SAMPLE = `def calculate_user_discount(user, cart_items):
+    # Calculate initial subtotal
+    subtotal = 0
+    for item in cart_items:
+        subtotal += item['price'] * item['quantity']
+    
+    # Insecure direct key access & missing error bounds
+    if user['role'] == 'VIP':
+        discount = subtotal * 0.20
+    else:
+        discount = subtotal * 0.05
+        
+    final_total = subtotal - discount
+    return final_total
+`;
 
 export default function Home() {
-  const [health, setHealth] = useState<HealthStatus | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [code, setCode] = useState<string>(DEFAULT_SAMPLE);
+  const [language, setLanguage] = useState<string>("auto");
+  const [framework, setFramework] = useState<string>("none");
+  const [reviewMode, setReviewMode] = useState<"quick" | "deep">("quick");
+  
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [reviewResult, setReviewResult] = useState<any | null>(null);
+  const [activeTab, setActiveTab] = useState<"summary" | "findings" | "metrics" | "diff">("summary");
 
-  const checkHealth = async () => {
+  const handleReviewSubmit = async () => {
+    if (!code.trim()) return;
+
     setLoading(true);
     setError(null);
+
     try {
-      const res = await fetch("http://localhost:8000/health");
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      const response = await fetch("http://localhost:8000/api/review", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          code: code,
+          language: language,
+          mode: reviewMode,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Server error: ${response.status} ${response.statusText}`);
       }
-      const data = await res.json();
-      setHealth(data);
+
+      const data = await response.json();
+      setReviewResult(data);
+      setActiveTab("summary");
     } catch (err: any) {
-      setError(err.message || "Failed to connect to FastAPI backend.");
+      setError(err.message || "Failed to communicate with FastAPI backend server.");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    checkHealth();
-  }, []);
-
   return (
-    <main className="container">
-      <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "2.25rem", fontWeight: 700, marginBottom: "0.5rem" }}>
-          Full-Stack Foundation Status
-        </h1>
-        <p style={{ color: "var(--text-secondary)", fontSize: "1.05rem" }}>
-          Phase 1 setup complete — Next.js frontend integrated with FastAPI backend gateway.
-        </p>
-      </div>
+    <div>
+      <Header />
 
-      <div className="grid">
-        <div className="card">
-          <div className="card-title">
-            <span>🚀</span> Backend API Status
-          </div>
-          {loading && <p className="card-text">Connecting to FastAPI endpoint...</p>}
-          {error && (
+      <main className="container">
+        <div style={{ marginBottom: "1.5rem" }}>
+          <h1 style={{ fontSize: "2rem", fontWeight: 800, letterSpacing: "-0.02em", marginBottom: "0.4rem" }}>
+            AI Code Review & Automated Refactoring Studio
+          </h1>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>
+            Powered by LangGraph multi-agent orchestration, Google Gemini, Mistral AI router, and RAG knowledge search.
+          </p>
+        </div>
+
+        {error && (
+          <div style={{ background: "rgba(244, 63, 94, 0.12)", border: "1px solid rgba(244, 63, 94, 0.3)", padding: "1rem 1.25rem", borderRadius: "10px", marginBottom: "1.5rem", color: "#fb7185", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <p className="card-text" style={{ color: "#ef4444", marginBottom: "0.5rem" }}>
-                ⚠️ {error}
-              </p>
-              <p className="card-text">Ensure FastAPI server is running on <code>http://localhost:8000</code>.</p>
-            </div>
-          )}
-          {health && (
-            <div>
-              <p className="card-text" style={{ marginBottom: "0.75rem" }}>
-                FastAPI server is operational and responding to health probes.
-              </p>
-              <div className="code-block">
-                <pre>{JSON.stringify(health, null, 2)}</pre>
+              <strong>⚠️ Review Error:</strong> {error}
+              <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "0.2rem" }}>
+                Make sure the FastAPI backend is running on <code>http://localhost:8000</code>.
               </div>
             </div>
-          )}
-          <button 
-            className="btn btn-primary" 
-            style={{ marginTop: "1rem" }} 
-            onClick={checkHealth}
-          >
-            Refresh Probe
-          </button>
-        </div>
+            <button className="btn btn-secondary btn-sm" onClick={() => setError(null)}>Dismiss</button>
+          </div>
+        )}
 
-        <div className="card">
-          <div className="card-title">
-            <span>⚙️</span> System Architecture Baseline
+        <div className="app-grid">
+          {/* Left Column: Code Input Workspace */}
+          <div>
+            <CodeEditor
+              code={code}
+              setCode={setCode}
+              language={language}
+              setLanguage={setLanguage}
+              framework={framework}
+              setFramework={setFramework}
+              reviewMode={reviewMode}
+              setReviewMode={setReviewMode}
+              onSubmit={handleReviewSubmit}
+              loading={loading}
+            />
           </div>
-          <p className="card-text" style={{ marginBottom: "1rem" }}>
-            The platform architecture specifies the following stack for incoming phases:
-          </p>
-          <ul style={{ listStyle: "none", color: "var(--text-secondary)", fontSize: "0.875rem" }}>
-            <li style={{ marginBottom: "0.5rem" }}>• <strong>Primary Model</strong>: Google Gemini (gemini-2.5-flash / pro)</li>
-            <li style={{ marginBottom: "0.5rem" }}>• <strong>Secondary Model</strong>: Mistral AI (codestral / mistral-large)</li>
-            <li style={{ marginBottom: "0.5rem" }}>• <strong>Embeddings</strong>: Gemini text-embedding-004</li>
-            <li style={{ marginBottom: "0.5rem" }}>• <strong>Vector Store</strong>: MongoDB Atlas Vector Search</li>
-            <li style={{ marginBottom: "0.5rem" }}>• <strong>Orchestration</strong>: LangGraph multi-agent engine</li>
-          </ul>
-        </div>
 
-        <div className="card">
-          <div className="card-title">
-            <span>📋</span> Upcoming Roadmap
-          </div>
-          <p className="card-text" style={{ marginBottom: "0.75rem" }}>
-            Next phase execution targets:
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <div style={{ padding: "0.5rem 0.75rem", background: "rgba(255,255,255,0.03)", borderRadius: "6px" }}>
-              <span style={{ fontWeight: 600, color: "var(--accent-cyan)" }}>Phase 2</span>: MongoDB Persistence Layer
-            </div>
-            <div style={{ padding: "0.5rem 0.75rem", background: "rgba(255,255,255,0.03)", borderRadius: "6px" }}>
-              <span style={{ fontWeight: 600, color: "var(--accent-indigo)" }}>Phase 3</span>: Gemini & Mistral Provider Layer
-            </div>
-            <div style={{ padding: "0.5rem 0.75rem", background: "rgba(255,255,255,0.03)", borderRadius: "6px" }}>
-              <span style={{ fontWeight: 600, color: "var(--accent-purple)" }}>Phase 4</span>: Code Validation & Language Detection
-            </div>
+          {/* Right Column: Review Results & Analysis Dashboard */}
+          <div>
+            {!reviewResult && !loading && (
+              <div className="card" style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "450px", textAlign: "center", padding: "3rem" }}>
+                <div style={{ fontSize: "3.5rem", marginBottom: "1rem" }}>⚡</div>
+                <h3 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.5rem" }}>Ready for Code Analysis</h3>
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", maxWidth: "400px", lineHeight: 1.6 }}>
+                  Paste your code snippet or choose a sample preset, select language & review depth, then click <strong>Launch Multi-Agent Review</strong>.
+                </p>
+              </div>
+            )}
+
+            {loading && (
+              <div className="card" style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "450px", textAlign: "center", padding: "3rem" }}>
+                <div className="spinner" style={{ width: "40px", height: "40px", borderWidth: "3px", marginBottom: "1.5rem" }}></div>
+                <h3 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.5rem" }}>Orchestrating Multi-Agent Pipeline...</h3>
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", maxWidth: "420px", lineHeight: 1.6 }}>
+                  {reviewMode === "deep" ? (
+                    "Running Security, Quality, Complexity, Bug Detection, RAG Context Retrieval, Refactoring, and AST Validation nodes..."
+                  ) : (
+                    "Running Quick Scan for rapid bug detection and security analysis..."
+                  )}
+                </p>
+                <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.5rem" }}>
+                  <span className="badge badge-indigo">Security Node</span>
+                  <span className="badge badge-purple">Quality Node</span>
+                  <span className="badge badge-cyan">AST Validator</span>
+                </div>
+              </div>
+            )}
+
+            {reviewResult && !loading && (
+              <div>
+                {/* Result Navigation Tabs */}
+                <div className="tabs-container">
+                  <button
+                    type="button"
+                    className={`tab-btn ${activeTab === "summary" ? "active" : ""}`}
+                    onClick={() => setActiveTab("summary")}
+                  >
+                    <span>📊</span> Executive Summary
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`tab-btn ${activeTab === "findings" ? "active" : ""}`}
+                    onClick={() => setActiveTab("findings")}
+                  >
+                    <span>🔍</span> Findings ({reviewResult.findings?.length || 0})
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`tab-btn ${activeTab === "metrics" ? "active" : ""}`}
+                    onClick={() => setActiveTab("metrics")}
+                  >
+                    <span>📈</span> Metrics
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`tab-btn ${activeTab === "diff" ? "active" : ""}`}
+                    onClick={() => setActiveTab("diff")}
+                  >
+                    <span>🛠️</span> Refactored Diff
+                  </button>
+                </div>
+
+                {/* Tab Content Panes */}
+                {activeTab === "summary" && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                    <ReviewSummary
+                      reviewId={reviewResult.review_id}
+                      verdict={reviewResult.verdict}
+                      ratingScore={reviewResult.rating_score}
+                      executiveSummary={reviewResult.executive_summary}
+                      totalFindings={reviewResult.findings?.length || 0}
+                      executionTime={reviewResult.execution_time_seconds}
+                      reviewMode={reviewResult.review_mode || reviewMode}
+                      modelUsed={reviewResult.model_used}
+                      languageDetected={reviewResult.language_detected || language}
+                    />
+
+                    <MetricsDashboard metrics={reviewResult.metrics} />
+                  </div>
+                )}
+
+                {activeTab === "findings" && (
+                  <FindingsExplorer
+                    findings={reviewResult.findings || []}
+                    ragDocuments={reviewResult.rag_documents_cited}
+                  />
+                )}
+
+                {activeTab === "metrics" && (
+                  <MetricsDashboard metrics={reviewResult.metrics} />
+                )}
+
+                {activeTab === "diff" && (
+                  <RefactoringDiff
+                    originalCode={code}
+                    refactoredCode={reviewResult.refactored_code}
+                    refactoringExplanation={reviewResult.refactoring_explanation}
+                    astValidated={reviewResult.ast_validated ?? true}
+                  />
+                )}
+              </div>
+            )}
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

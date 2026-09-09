@@ -6,4 +6,4 @@ node_modules/
 .next/
 dist/
 build/
-.env.example
+*.tsbuildinfo
