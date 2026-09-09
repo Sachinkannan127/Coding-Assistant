@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
 from backend.app.services.code_validator import validate_and_normalize_code, CodeValidationError
+from backend.app.services.tracing import tracing_service
 from backend.app.graph import run_review_workflow
 from backend.app.db.repositories.review_repository import ReviewRepository
 from backend.app.models.review_schemas import (
@@ -29,6 +30,7 @@ class ReviewService:
 
     def __init__(self, repo: Optional[ReviewRepository] = None):
         self.repo = repo or ReviewRepository()
+        tracing_service.setup_tracing()
 
     async def run_review(
         self,
@@ -51,8 +53,10 @@ class ReviewService:
         # 1. Validate & Normalize Code Input
         norm_result = validate_and_normalize_code(code=code, language=language)
 
-        # 2. Invoke LangGraph Multi-Agent State Graph Workflow
+        # 2. Invoke LangGraph Multi-Agent State Graph Workflow with Tracing Config
+        run_config = tracing_service.get_run_config(review_id=rev_id, mode=clean_mode, language=norm_result.language)
         logger.info(f"ReviewService executing '{clean_mode}' review workflow for {rev_id}...")
+
         graph_output = await run_review_workflow(
             review_id=rev_id,
             original_code=norm_result.normalized_code,
