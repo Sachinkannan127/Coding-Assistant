@@ -3,6 +3,7 @@ import logging
 from typing import Dict, Any, List
 from backend.app.graph.state import ReviewState
 from backend.app.services.code_validator import validate_and_normalize_code
+from backend.app.services.rag_service import rag_service
 from backend.app.agents import (
     code_analysis_agent,
     bug_detection_agent,
@@ -39,11 +40,14 @@ async def entrypoint_node(state: ReviewState) -> Dict[str, Any]:
 async def rag_retrieval_node(state: ReviewState) -> Dict[str, Any]:
     """Retrieves relevant knowledge base context for Deep Review mode."""
     logger.info("Executing RAG Retrieval Node...")
-    # RAG repository query will be integrated in Phase 8; currently maintains context
-    existing_context = state.get("rag_context", [])
-    if not existing_context:
-        existing_context = ["OWASP Top 10 API Security Guidelines", "Clean Code Refactoring Standards"]
-    return {"rag_context": existing_context}
+    original_code = state.get("original_code", "")
+    language = state.get("language", "python")
+
+    retrieved_context = await rag_service.retrieve_knowledge(
+        query_code=original_code,
+        language=language
+    )
+    return {"rag_context": retrieved_context}
 
 
 async def code_analysis_node(state: ReviewState) -> Dict[str, Any]:

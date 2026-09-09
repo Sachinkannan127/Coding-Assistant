@@ -40,3 +40,28 @@ class RAGRepository:
             doc.pop("_id", None)
             documents.append(RAGDocument(**doc))
         return documents
+
+    async def vector_search(self, query_vector: List[float], limit: int = 3) -> List[RAGDocument]:
+        """Execute MongoDB Atlas $vectorSearch aggregation pipeline."""
+        pipeline = [
+            {
+                "$vectorSearch": {
+                    "index": "vector_index",
+                    "path": "embedding",
+                    "queryVector": query_vector,
+                    "numCandidates": 20,
+                    "limit": limit
+                }
+            }
+        ]
+        documents = []
+        try:
+            cursor = self.rag_collection.aggregate(pipeline)
+            async for doc in cursor:
+                doc.pop("_id", None)
+                documents.append(RAGDocument(**doc))
+        except Exception:
+            # Vector index might not be created on local MongoDB or Atlas cluster
+            pass
+        return documents
+
