@@ -1,8 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import { formatReviewToMarkdown, downloadMarkdownFile, copyMarkdownToClipboard } from "./ExportUtils";
 
 interface ReviewSummaryProps {
+  reviewResult?: any;
   reviewId: string;
   verdict: string;
   ratingScore: number;
@@ -12,9 +14,11 @@ interface ReviewSummaryProps {
   reviewMode: string;
   modelUsed?: string;
   languageDetected?: string;
+  originalCode?: string;
 }
 
 export default function ReviewSummary({
+  reviewResult,
   reviewId,
   verdict,
   ratingScore,
@@ -24,7 +28,10 @@ export default function ReviewSummary({
   reviewMode,
   modelUsed = "gemini-2.5-flash",
   languageDetected,
+  originalCode,
 }: ReviewSummaryProps) {
+  const [copied, setCopied] = useState(false);
+
   const getVerdictBadge = (v: string) => {
     switch (v) {
       case "PASS":
@@ -46,9 +53,44 @@ export default function ReviewSummary({
     return "var(--accent-rose)";
   };
 
+  const handleDownloadReport = () => {
+    const mdContent = formatReviewToMarkdown(reviewResult || {
+      review_id: reviewId,
+      verdict,
+      rating_score: ratingScore,
+      executive_summary: executiveSummary,
+      review_mode: reviewMode,
+      execution_time_seconds: executionTime,
+      model_used: modelUsed,
+      language_detected: languageDetected,
+    }, originalCode);
+
+    const filename = `review_report_${reviewId ? reviewId.substring(0, 8) : "live"}.md`;
+    downloadMarkdownFile(filename, mdContent);
+  };
+
+  const handleCopyMarkdown = async () => {
+    const mdContent = formatReviewToMarkdown(reviewResult || {
+      review_id: reviewId,
+      verdict,
+      rating_score: ratingScore,
+      executive_summary: executiveSummary,
+      review_mode: reviewMode,
+      execution_time_seconds: executionTime,
+      model_used: modelUsed,
+      language_detected: languageDetected,
+    }, originalCode);
+
+    const success = await copyMarkdownToClipboard(mdContent);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    }
+  };
+
   return (
     <div className="card fade-in">
-      <div className="card-header">
+      <div className="card-header" style={{ flexWrap: "wrap", gap: "0.75rem" }}>
         <div>
           <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.25rem" }}>
             REVIEW REPORT #{reviewId ? reviewId.substring(0, 8) : "LIVE"}
@@ -57,7 +99,28 @@ export default function ReviewSummary({
             <span>📊</span> Executive Review Summary
           </div>
         </div>
-        <div>{getVerdictBadge(verdict)}</div>
+
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          {getVerdictBadge(verdict)}
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={handleCopyMarkdown}
+            title="Copy Markdown Report to Clipboard"
+            style={{ fontSize: "0.78rem" }}
+          >
+            {copied ? "✓ Copied MD" : "📋 Copy MD"}
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            onClick={handleDownloadReport}
+            title="Download Markdown (.md) Audit Report"
+            style={{ fontSize: "0.78rem" }}
+          >
+            📥 Export (.md)
+          </button>
+        </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "1rem", marginBottom: "1.25rem" }}>

@@ -1,6 +1,6 @@
 # AI Code Review & Refactoring Platform
 
-[![Phase 15 Complete](https://img.shields.io/badge/Phase-15%20Side--by--Side%20Diff%20Comparison%20Complete-green.svg)](#phase-status)
+[![Phase 16 Complete](https://img.shields.io/badge/Phase-16%20Markdown%20Export%20Complete-green.svg)](#phase-status)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
 [![Next.js](https://img.shields.io/badge/Frontend-Next.js%2014-000000.svg)](https://nextjs.org/)
 [![LangGraph](https://img.shields.io/badge/Orchestration-LangGraph-FF6F61.svg)](https://langchain-ai.github.io/langgraph/)
@@ -11,8 +11,8 @@ An enterprise-grade, multi-agent AI system that analyzes code, detects bugs and 
 
 ## 🏗 System Architecture Overview
 
-- **Frontend**: Next.js 14 App Router, TypeScript, Glassmorphic HSL Theme, Code Input Workspace, Interactive Findings Explorer, Metrics Dashboard, and Refactoring Diff View (Split & Unified modes).
-- **Backend Gateway**: FastAPI, Pydantic v2, CORS middleware, OpenAPI specification.
+- **Frontend**: Next.js 14 App Router, TypeScript, Glassmorphic HSL Theme, Code Input Workspace, Interactive Findings Explorer, Metrics Dashboard, Refactoring Diff View, and Markdown Report Exporter.
+- **Backend Gateway**: FastAPI, Pydantic v2, CORS middleware, OpenAPI specification, `GET /api/review/{id}/export` Markdown download endpoint.
 - **Workflow Controller**: Stateful LangGraph graph engine with parallel execution branches and validation retry loops.
 - **AI Framework**: LangChain with primary provider **Google Gemini** (`gemini-2.5-flash`, `gemini-2.5-pro`) and secondary fallback provider **Mistral AI** (`codestral-latest`, `mistral-large-latest`).
 - **Embedding & RAG**: Google Gemini Embeddings (`text-embedding-004`) + MongoDB Atlas Vector Search.
@@ -42,13 +42,13 @@ An enterprise-grade, multi-agent AI system that analyzes code, detects bugs and 
 │   └── agent-design.md       # 8 Agent roles & LangGraph ReviewState design
 ├── frontend/
 │   ├── app/
-│   │   ├── components/       # Header, CodeEditor, ReviewSummary, MetricsDashboard, FindingsExplorer, RefactoringDiff, DiffUtils
+│   │   ├── components/       # Header, CodeEditor, ReviewSummary, MetricsDashboard, FindingsExplorer, RefactoringDiff, DiffUtils, ExportUtils
 │   │   ├── globals.css       # HSL Dark Glassmorphism CSS system
 │   │   ├── layout.tsx        # Next.js App Router root layout
-│   │   └── page.tsx          # Full-stack AI review studio dashboard
+   │   └── page.tsx          # Full-stack AI review studio dashboard
 │   ├── package.json          # Node dependencies
 │   └── tsconfig.json         # TypeScript configuration
-├── tests/                    # 14 pytest test modules (56 test cases)
+├── tests/                    # 14 pytest test modules (57 test cases)
 ├── .env.example              # Environment variables template
 └── README.md
 ```
@@ -81,6 +81,7 @@ FastAPI documentation will be accessible at:
 - **Interactive Swagger Docs**: `http://localhost:8000/docs`
 - **Health Check Endpoint**: `http://localhost:8000/health`
 - **Review API Endpoint**: `POST http://localhost:8000/api/review`
+- **Report Export Endpoint**: `GET http://localhost:8000/api/review/{id}/export`
 
 ### 3. Running Backend Tests
 ```bash
@@ -120,7 +121,7 @@ Next.js web application will be accessible at `http://localhost:3000`.
 - [x] **Phase 13**: FastAPI Review API
 - [x] **Phase 14**: Next.js Frontend Review Experience
 - [x] **Phase 15**: Original vs Refactored Side-by-Side Comparison
-- [ ] **Phase 16**: Markdown Export
+- [x] **Phase 16**: Markdown Export
 - [ ] **Phase 17**: Graceful Errors & Edge Cases
 - [ ] **Phase 18**: End-to-End Testing & AI Evaluation
 - [ ] **Phase 19**: Security Hardening

@@ -189,6 +189,8 @@ export default function Home() {
                 {activeTab === "summary" && (
                   <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                     <ReviewSummary
+                      reviewResult={reviewResult}
+                      originalCode={code}
                       reviewId={reviewResult.review_id}
                       verdict={reviewResult.verdict}
                       ratingScore={reviewResult.rating_score}

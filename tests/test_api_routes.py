@@ -89,3 +89,41 @@ def test_get_reviews_list():
         data = response.json()
         assert data["count"] == 2
         assert len(data["reviews"]) == 2
+
+
+def test_export_review_markdown_endpoint():
+    """Verify GET /api/review/{review_id}/export returns markdown text response."""
+    mock_doc = {
+        "review_id": "rev-export-99",
+        "verdict": "PASS",
+        "rating_score": 92,
+        "executive_summary": "Code passes security audit.",
+        "review_mode": "deep",
+        "execution_time_seconds": 1.25,
+        "language_detected": "python",
+        "model_used": "gemini-2.5-flash",
+        "metrics": {"security": 95, "readability": 90},
+        "findings": [
+            {
+                "category": "security",
+                "severity": "LOW",
+                "title": "Unused Import",
+                "description": "Unused os import",
+                "line_numbers": [2]
+            }
+        ],
+        "refactored_code": "def clean_fn(): pass\n"
+    }
+
+    with patch("backend.app.api.review_routes.review_service.get_review_by_id", new_callable=AsyncMock) as mock_get:
+        mock_get.return_value = mock_doc
+
+        response = client.get("/api/review/rev-export-99/export")
+        assert response.status_code == 200
+        assert "text/markdown" in response.headers["content-type"]
+        assert "attachment; filename=\"review_report_rev-expo.md\"" in response.headers["content-disposition"]
+        text = response.text
+        assert "AI Code Review & Refactoring Audit Report" in text
+        assert "rev-export-99" in text
+        assert "Unused Import" in text
+        assert "def clean_fn(): pass" in text
