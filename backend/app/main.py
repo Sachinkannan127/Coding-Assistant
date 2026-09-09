@@ -5,6 +5,7 @@ from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.config import settings
 from backend.app.db.mongodb import db_manager
+from backend.app.api import review_router
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register API Routers
+app.include_router(review_router, prefix="/api", tags=["Code Reviews"])
 
 
 @app.get(
