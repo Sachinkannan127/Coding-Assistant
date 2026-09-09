@@ -70,6 +70,7 @@ cp .env.example .env
 python -m uvicorn backend.app.main:app --reload --port 8000
 ```
 FastAPI documentation will be accessible at:
+- **Landing Page Endpoint**: `http://localhost:8000/`
 - **Interactive Swagger Docs**: `http://localhost:8000/docs`
 - **Health Check Endpoint**: `http://localhost:8000/health`
 

@@ -21,6 +21,24 @@ app.add_middleware(
 )
 
 @app.get(
+    "/",
+    status_code=status.HTTP_200_OK,
+    tags=["System"]
+)
+async def root():
+    """
+    Landing Page Endpoint
+    Returns welcome message, API name, version, and links to API documentation and health check.
+    """
+    return {
+        "message": f"Welcome to {settings.APP_NAME}",
+        "app_name": settings.APP_NAME,
+        "version": settings.APP_VERSION,
+        "docs_url": "/docs",
+        "health_url": "/health"
+    }
+
+@app.get(
     "/health",
     status_code=status.HTTP_200_OK,
     tags=["System"]
