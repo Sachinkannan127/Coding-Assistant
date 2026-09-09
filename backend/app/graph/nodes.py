@@ -4,6 +4,7 @@ from typing import Dict, Any, List
 from backend.app.graph.state import ReviewState
 from backend.app.services.code_validator import validate_and_normalize_code
 from backend.app.services.rag_service import rag_service
+from backend.app.services.code_refactor_validator import validate_refactored_code
 from backend.app.agents import (
     code_analysis_agent,
     bug_detection_agent,
@@ -134,45 +135,35 @@ async def refactoring_node(state: ReviewState) -> Dict[str, Any]:
 
 async def validation_node(state: ReviewState) -> Dict[str, Any]:
     """
-    Validates generated refactored code via AST check.
+    Validates generated refactored code via AST syntax parsing and signature preservation checks.
     Increments retry_count and logs errors if validation fails.
     """
     logger.info("Executing Validation Node...")
-    refac_code = state.get("refactored_code", "")
-    lang = state.get("language", "python").lower()
+    orig_code = state.get("original_code", "")
+    refac_code = state.get("refactored_code", orig_code)
+    lang = state.get("language", "python")
     retry_count = state.get("retry_count", 0)
 
-    # 1. AST Syntax Check
-    is_valid = True
-    error_msg = None
+    val_result = validate_refactored_code(
+        original_code=orig_code,
+        refactored_code=refac_code,
+        language=lang,
+        retry_count=retry_count
+    )
 
-    if lang == "python" and refac_code:
-        try:
-            ast.parse(refac_code)
-        except SyntaxError as syn_err:
-            is_valid = False
-            error_msg = f"Python SyntaxError at line {syn_err.lineno}: {syn_err.msg}"
+    if val_result.is_valid:
+        return {"validation_status": val_result.status}
     else:
-        # Generic bracket balance check for non-Python languages
-        if refac_code.count("{") != refac_code.count("}") or refac_code.count("(") != refac_code.count(")"):
-            is_valid = False
-            error_msg = "Mismatched brackets or parentheses in refactored code."
-
-    if is_valid:
-        status = "passed" if retry_count == 0 else "retried_passed"
-        return {"validation_status": status}
-    else:
-        logger.warning(f"Validation failed (retry {retry_count}): {error_msg}")
-        new_retry = retry_count + 1
-        if new_retry >= 2:
+        logger.warning(f"Validation failed (retry {retry_count}): {val_result.errors}")
+        if val_result.status == "fallback_original":
             return {
                 "validation_status": "fallback_original",
-                "refactored_code": state["original_code"],
-                "validation_errors": [error_msg]
+                "refactored_code": orig_code,
+                "validation_errors": val_result.errors
             }
         return {
-            "retry_count": new_retry,
-            "validation_errors": [error_msg]
+            "retry_count": retry_count + 1,
+            "validation_errors": val_result.errors
         }
 
 
