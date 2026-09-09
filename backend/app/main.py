@@ -1,14 +1,39 @@
+import logging
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.config import settings
+from backend.app.db.mongodb import db_manager
+
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    FastAPI Lifespan Context Manager.
+    Handles startup database connection initialization and graceful shutdown cleanup.
+    """
+    logger.info("Initializing application resources...")
+    try:
+        await db_manager.connect()
+    except Exception as e:
+        logger.warning(f"Could not connect to MongoDB on startup: {e}")
+    
+    yield
+    
+    logger.info("Shutting down application resources...")
+    await db_manager.close()
+
 
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     description="FastAPI Backend for AI Code Review & Refactoring Platform",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # CORS Middleware
@@ -19,6 +44,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get(
     "/",
@@ -38,6 +64,7 @@ async def root():
         "health_url": "/health"
     }
 
+
 @app.get(
     "/health",
     status_code=status.HTTP_200_OK,
@@ -46,15 +73,18 @@ async def root():
 async def health_check():
     """
     System Health Check Endpoint
-    Returns system status, environment mode, and current ISO timestamp.
+    Returns system status, environment mode, current ISO timestamp, and MongoDB connectivity.
     """
+    db_connected = await db_manager.ping()
     return {
         "status": "ok",
         "app_name": settings.APP_NAME,
         "version": settings.APP_VERSION,
         "environment": settings.ENVIRONMENT,
+        "database": "connected" if db_connected else "disconnected",
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
+
 
 if __name__ == "__main__":
     import uvicorn

@@ -31,4 +31,6 @@ def test_health_endpoint():
     assert "app_name" in data
     assert "version" in data
     assert "environment" in data
+    assert "database" in data
     assert "timestamp" in data
+
