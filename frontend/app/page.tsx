@@ -5,7 +5,7 @@ import Header from "./components/Header";
 import CodeEditor from "./components/CodeEditor";
 import ReviewSummary from "./components/ReviewSummary";
 import MetricsDashboard from "./components/MetricsDashboard";
-import FindingsExplorer, { Finding } from "./components/FindingsExplorer";
+import FindingsExplorer from "./components/FindingsExplorer";
 import RefactoringDiff from "./components/RefactoringDiff";
 
 const DEFAULT_SAMPLE = `def calculate_user_discount(user, cart_items):
@@ -67,6 +67,11 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleApplyRefactoredCode = (newCode: string) => {
+    setCode(newCode);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -216,6 +221,9 @@ export default function Home() {
                     refactoredCode={reviewResult.refactored_code}
                     refactoringExplanation={reviewResult.refactoring_explanation}
                     astValidated={reviewResult.ast_validated ?? true}
+                    languageDetected={reviewResult.language_detected || language}
+                    findings={reviewResult.findings || []}
+                    onApplyCode={handleApplyRefactoredCode}
                   />
                 )}
               </div>

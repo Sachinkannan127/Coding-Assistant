@@ -1,6 +1,6 @@
 # AI Code Review & Refactoring Platform
 
-[![Phase 14 Complete](https://img.shields.io/badge/Phase-14%20Next.js%20Frontend%20Review%20Experience%20Complete-green.svg)](#phase-status)
+[![Phase 15 Complete](https://img.shields.io/badge/Phase-15%20Side--by--Side%20Diff%20Comparison%20Complete-green.svg)](#phase-status)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
 [![Next.js](https://img.shields.io/badge/Frontend-Next.js%2014-000000.svg)](https://nextjs.org/)
 [![LangGraph](https://img.shields.io/badge/Orchestration-LangGraph-FF6F61.svg)](https://langchain-ai.github.io/langgraph/)
@@ -11,7 +11,7 @@ An enterprise-grade, multi-agent AI system that analyzes code, detects bugs and 
 
 ## 🏗 System Architecture Overview
 
-- **Frontend**: Next.js 14 App Router, TypeScript, Glassmorphic HSL Theme, Code Input Workspace, Interactive Findings Explorer, Metrics Dashboard, and Refactoring Diff View.
+- **Frontend**: Next.js 14 App Router, TypeScript, Glassmorphic HSL Theme, Code Input Workspace, Interactive Findings Explorer, Metrics Dashboard, and Refactoring Diff View (Split & Unified modes).
 - **Backend Gateway**: FastAPI, Pydantic v2, CORS middleware, OpenAPI specification.
 - **Workflow Controller**: Stateful LangGraph graph engine with parallel execution branches and validation retry loops.
 - **AI Framework**: LangChain with primary provider **Google Gemini** (`gemini-2.5-flash`, `gemini-2.5-pro`) and secondary fallback provider **Mistral AI** (`codestral-latest`, `mistral-large-latest`).
@@ -42,7 +42,7 @@ An enterprise-grade, multi-agent AI system that analyzes code, detects bugs and 
 │   └── agent-design.md       # 8 Agent roles & LangGraph ReviewState design
 ├── frontend/
 │   ├── app/
-│   │   ├── components/       # Header, CodeEditor, ReviewSummary, MetricsDashboard, FindingsExplorer, RefactoringDiff
+│   │   ├── components/       # Header, CodeEditor, ReviewSummary, MetricsDashboard, FindingsExplorer, RefactoringDiff, DiffUtils
 │   │   ├── globals.css       # HSL Dark Glassmorphism CSS system
 │   │   ├── layout.tsx        # Next.js App Router root layout
 │   │   └── page.tsx          # Full-stack AI review studio dashboard
@@ -119,7 +119,7 @@ Next.js web application will be accessible at `http://localhost:3000`.
 - [x] **Phase 12**: LangSmith Tracing & Evaluation
 - [x] **Phase 13**: FastAPI Review API
 - [x] **Phase 14**: Next.js Frontend Review Experience
-- [ ] **Phase 15**: Original vs Refactored Side-by-Side Comparison
+- [x] **Phase 15**: Original vs Refactored Side-by-Side Comparison
 - [ ] **Phase 16**: Markdown Export
 - [ ] **Phase 17**: Graceful Errors & Edge Cases
 - [ ] **Phase 18**: End-to-End Testing & AI Evaluation
