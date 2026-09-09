@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface HeaderProps {
   backendStatus?: "connected" | "disconnected" | "checking";
@@ -9,24 +9,25 @@ interface HeaderProps {
 export default function Header({ backendStatus = "checking" }: HeaderProps) {
   const [status, setStatus] = useState<"connected" | "disconnected" | "checking">(backendStatus);
 
-  useEffect(() => {
-    const checkBackend = async () => {
-      try {
-        const res = await fetch("http://localhost:8000/health");
-        if (res.ok) {
-          setStatus("connected");
-        } else {
-          setStatus("disconnected");
-        }
-      } catch {
+  const checkBackend = useCallback(async () => {
+    setStatus("checking");
+    try {
+      const res = await fetch("http://localhost:8000/health");
+      if (res.ok) {
+        setStatus("connected");
+      } else {
         setStatus("disconnected");
       }
-    };
+    } catch {
+      setStatus("disconnected");
+    }
+  }, []);
 
+  useEffect(() => {
     checkBackend();
     const interval = setInterval(checkBackend, 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [checkBackend]);
 
   return (
     <nav className="navbar">
@@ -46,14 +47,20 @@ export default function Header({ backendStatus = "checking" }: HeaderProps) {
           <span style={{ fontSize: "0.85rem" }}>⚡</span> Gemini + Mistral Router
         </span>
         {status === "connected" && (
-          <span className="badge badge-success">
+          <span className="badge badge-success" title="FastAPI server operational">
             <span className="status-dot"></span> Backend Active
           </span>
         )}
         {status === "disconnected" && (
-          <span className="badge badge-danger">
-            <span className="status-dot offline"></span> Backend Offline
-          </span>
+          <button
+            type="button"
+            className="badge badge-danger"
+            onClick={checkBackend}
+            style={{ cursor: "pointer", border: "1px solid rgba(244, 63, 94, 0.4)" }}
+            title="Click to retry connecting to FastAPI backend"
+          >
+            <span className="status-dot offline"></span> Backend Offline (Retry)
+          </button>
         )}
         {status === "checking" && (
           <span className="badge badge-amber">

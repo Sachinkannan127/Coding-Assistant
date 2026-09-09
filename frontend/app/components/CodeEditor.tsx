@@ -104,6 +104,9 @@ export default function CodeEditor({
     return Array.from({ length: Math.max(lineCount, 12) }, (_, i) => i + 1);
   }, [lineCount]);
 
+  const isApproachingLimit = code.length > 40000;
+  const isExceedingLimit = code.length > 50000;
+
   const loadPreset = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const idx = parseInt(e.target.value, 10);
     if (isNaN(idx)) return;
@@ -210,7 +213,14 @@ export default function CodeEditor({
             <span>•</span>
             <span>{lineCount} lines</span>
             <span>•</span>
-            <span>{code.length} characters</span>
+            <span style={{ color: isExceedingLimit ? "var(--accent-rose)" : isApproachingLimit ? "var(--accent-amber)" : "var(--text-muted)" }}>
+              {code.length.toLocaleString()} / 50,000 chars
+            </span>
+            {isApproachingLimit && (
+              <span className={`badge ${isExceedingLimit ? "badge-danger" : "badge-amber"}`} style={{ fontSize: "0.65rem", padding: "0.15rem 0.4rem" }}>
+                {isExceedingLimit ? "Exceeds 50KB Limit" : "Approaching Limit"}
+              </span>
+            )}
           </div>
           <button 
             type="button" 
@@ -243,7 +253,7 @@ export default function CodeEditor({
           type="button"
           className="btn btn-primary"
           onClick={onSubmit}
-          disabled={loading || !code.trim()}
+          disabled={loading || !code.trim() || isExceedingLimit}
           style={{ padding: "0.875rem 2rem", fontSize: "0.95rem" }}
         >
           {loading ? (

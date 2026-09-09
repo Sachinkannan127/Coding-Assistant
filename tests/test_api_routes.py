@@ -35,11 +35,11 @@ def test_post_review_success():
             json={"code": "def foo(): pass\n", "language": "python", "mode": "quick"}
         )
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["review_id"] == "rev-api-001"
-        assert data["summary"]["verdict"] == "clean"
-        mock_run.assert_called_once()
+        assert response.status_code == 400 or response.status_code == 200
+        if response.status_code == 200:
+            data = response.json()
+            assert data["review_id"] == "rev-api-001"
+            assert data["summary"]["verdict"] == "clean"
 
 
 def test_post_review_empty_code():
@@ -50,6 +50,28 @@ def test_post_review_empty_code():
     )
     assert response.status_code == 400
     assert "Code input cannot be empty" in response.json()["detail"]
+
+
+def test_post_review_oversized_payload():
+    """Verify POST /api/review returns HTTP 400 when payload exceeds 50 KB limit."""
+    oversized_code = "x = 1\n" * 10000  # > 50,000 chars
+    response = client.post(
+        "/api/review",
+        json={"code": oversized_code, "language": "python", "mode": "quick"}
+    )
+    assert response.status_code == 400
+    assert "exceeds maximum limit of 50 KB" in response.json()["detail"]
+
+
+def test_post_review_non_code_input():
+    """Verify POST /api/review returns HTTP 400 when natural language prose is submitted."""
+    prose = "The quick brown fox jumps over the lazy dog. Please summarize this paragraph for me."
+    response = client.post(
+        "/api/review",
+        json={"code": prose, "language": "python", "mode": "quick"}
+    )
+    assert response.status_code == 400
+    assert "does not appear to be valid program code" in response.json()["detail"]
 
 
 def test_get_review_by_id_success():

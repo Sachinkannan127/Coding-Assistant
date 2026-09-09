@@ -24,6 +24,8 @@ const DEFAULT_SAMPLE = `def calculate_user_discount(user, cart_items):
     return final_total
 `;
 
+const MAX_CHAR_LIMIT = 50000; // 50 KB ceiling
+
 export default function Home() {
   const [code, setCode] = useState<string>(DEFAULT_SAMPLE);
   const [language, setLanguage] = useState<string>("auto");
@@ -36,10 +38,23 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<"summary" | "findings" | "metrics" | "diff">("summary");
 
   const handleReviewSubmit = async () => {
-    if (!code.trim()) return;
+    // 1. Client-Side Input Validation
+    if (!code || !code.trim()) {
+      setError("Code input cannot be empty. Please paste or enter source code to analyze.");
+      return;
+    }
+
+    if (code.length > MAX_CHAR_LIMIT) {
+      setError(`Payload size (${code.length.toLocaleString()} chars) exceeds limit of 50 KB (${MAX_CHAR_LIMIT.toLocaleString()} chars). Please submit a smaller snippet.`);
+      return;
+    }
 
     setLoading(true);
     setError(null);
+
+    // 2. AbortController Request Timeout (45 seconds)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
 
     try {
       const response = await fetch("http://localhost:8000/api/review", {
@@ -47,12 +62,15 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
+        signal: controller.signal,
         body: JSON.stringify({
           code: code,
           language: language,
           mode: reviewMode,
         }),
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -63,7 +81,14 @@ export default function Home() {
       setReviewResult(data);
       setActiveTab("summary");
     } catch (err: any) {
-      setError(err.message || "Failed to communicate with FastAPI backend server.");
+      clearTimeout(timeoutId);
+      if (err.name === "AbortError") {
+        setError("Review request timed out after 45 seconds. The server might be processing a large graph or restarting. Please try again.");
+      } else if (err.message && err.message.includes("Failed to fetch")) {
+        setError("Unable to connect to FastAPI backend server. Ensure the server is running on http://localhost:8000.");
+      } else {
+        setError(err.message || "Failed to execute code review.");
+      }
     } finally {
       setLoading(false);
     }
@@ -91,12 +116,15 @@ export default function Home() {
         {error && (
           <div style={{ background: "rgba(244, 63, 94, 0.12)", border: "1px solid rgba(244, 63, 94, 0.3)", padding: "1rem 1.25rem", borderRadius: "10px", marginBottom: "1.5rem", color: "#fb7185", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <strong>⚠️ Review Error:</strong> {error}
+              <strong>⚠️ Review Alert:</strong> {error}
               <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "0.2rem" }}>
                 Make sure the FastAPI backend is running on <code>http://localhost:8000</code>.
               </div>
             </div>
-            <button className="btn btn-secondary btn-sm" onClick={() => setError(null)}>Dismiss</button>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button className="btn btn-primary btn-sm" onClick={handleReviewSubmit}>Retry Request</button>
+              <button className="btn btn-secondary btn-sm" onClick={() => setError(null)}>Dismiss</button>
+            </div>
           </div>
         )}
 
