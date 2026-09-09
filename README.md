@@ -1,6 +1,6 @@
 # AI Code Review & Refactoring Platform
 
-[![Phase 2 Complete](https://img.shields.io/badge/Phase-2%20MongoDB%20Persistence%20Complete-green.svg)](#phase-status)
+[![Phase 3 Complete](https://img.shields.io/badge/Phase-3%20Gemini%20%26%20Mistral%20Provider%20Layer%20Complete-green.svg)](#phase-status)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
 [![Next.js](https://img.shields.io/badge/Frontend-Next.js%2014-000000.svg)](https://nextjs.org/)
 [![LangGraph](https://img.shields.io/badge/Orchestration-LangGraph-FF6F61.svg)](https://langchain-ai.github.io/langgraph/)
@@ -33,7 +33,11 @@ An enterprise-grade, multi-agent AI system that analyzes code, detects bugs and 
 │   │   ├── db/               # Async MongoDB client & database manager
 │   │   │   ├── mongodb.py
 │   │   │   └── repositories/ # ReviewRepository & RAGRepository
-│   │   └── models/           # Pydantic v2 schemas for collections
+│   │   ├── models/           # Pydantic v2 schemas for collections
+│   │   └── services/         # LLM Provider Layer (Gemini + Mistral Router & Embeddings)
+│   │       └── llm/
+│   │           ├── router.py
+│   │           └── embeddings.py
 │   └── requirements.txt      # Backend dependencies
 ├── docs/
 │   ├── requirements.md       # Detailed system & schema specs
@@ -46,7 +50,9 @@ An enterprise-grade, multi-agent AI system that analyzes code, detects bugs and 
 ├── tests/
 │   ├── __init__.py
 │   ├── test_health.py        # Pytest health check tests
-│   └── test_mongodb.py       # Pytest MongoDB schema & model tests
+│   ├── test_mongodb.py       # Pytest MongoDB schema & model tests
+│   ├── test_llm_router.py   # Pytest LLM Router primary & fallback tests
+│   └── test_embeddings.py   # Pytest Gemini text-embedding-004 tests
 ├── .env.example              # Environment variables template
 └── README.md
 ```
@@ -104,8 +110,7 @@ Next.js web application will be accessible at `http://localhost:3000`.
 - [x] **Phase 0**: Requirements & Architecture Validation (`docs/`)
 - [x] **Phase 1**: Full-Stack Project Foundation (FastAPI + Next.js + Health API)
 - [x] **Phase 2**: MongoDB Persistence Layer
-
-- [ ] **Phase 3**: Gemini & Mistral Provider Layer
+- [x] **Phase 3**: Gemini & Mistral Provider Layer
 - [ ] **Phase 4**: Code Validation & Language Detection
 - [ ] **Phase 5**: LangChain Foundation
 - [ ] **Phase 6**: Multi-Agent Review System
