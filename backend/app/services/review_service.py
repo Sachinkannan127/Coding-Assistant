@@ -2,10 +2,20 @@ import time
 import uuid
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List, Optional
 
 from backend.app.services.code_validator import validate_and_normalize_code, CodeValidationError
 from backend.app.graph import run_review_workflow
+from backend.app.db.repositories.review_repository import ReviewRepository
+from backend.app.models.review_schemas import (
+    CodeReviewDocument,
+    InputMetadata,
+    Summary,
+    Metrics,
+    Finding,
+    Refactoring,
+    ExecutionMetadata
+)
 
 logger = logging.getLogger(__name__)
 
@@ -14,8 +24,11 @@ class ReviewService:
     """
     High-level Review Orchestration Service.
     Handles input validation, execution mode dispatching (Quick Scan vs Deep Review),
-    LangGraph execution, duration timing, and Unified Schema response formatting.
+    LangGraph execution, MongoDB Atlas persistence, and Unified Schema response formatting.
     """
+
+    def __init__(self, repo: Optional[ReviewRepository] = None):
+        self.repo = repo or ReviewRepository()
 
     async def run_review(
         self,
@@ -25,16 +38,8 @@ class ReviewService:
         review_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Executes code review workflow and returns unified JSON schema payload.
-
-        Args:
-            code: Source code input text.
-            language: Programming language / framework or 'auto'.
-            mode: 'quick' for rapid scan or 'deep' for full audit with refactoring & RAG.
-            review_id: Optional existing review ID string.
-
-        Returns:
-            Dict conforming strictly to the Unified Output Schema.
+        Executes code review workflow, persists results to MongoDB Atlas (with graceful fallback),
+        and returns unified JSON schema payload.
         """
         start_time = time.perf_counter()
         rev_id = review_id or f"rev_{uuid.uuid4().hex[:12]}"
@@ -57,7 +62,7 @@ class ReviewService:
 
         elapsed_ms = int((time.perf_counter() - start_time) * 1000)
 
-        # 3. Format Response conforming strictly to Unified Output Schema
+        # 3. Format Response Objects
         summary_data = {
             "overview": graph_output.get("overview", "Code Review Summary"),
             "verdict": graph_output.get("verdict", "clean"),
@@ -90,7 +95,21 @@ class ReviewService:
             "rag_sources": ["OWASP Top 10 API Security", "Clean Code Guidelines"] if clean_mode == "deep" else []
         }
 
-        return {
+        # Convert raw findings dicts to Finding schema objects
+        findings_list: List[Finding] = []
+        for idx, f in enumerate(graph_output.get("findings", [])):
+            if isinstance(f, dict):
+                f_copy = f.copy()
+                if "id" not in f_copy or not f_copy["id"]:
+                    f_copy["id"] = f"find-{idx+1:03d}"
+                # Ensure literal validation bounds
+                if f_copy.get("category") not in ["bug", "security", "quality", "complexity"]:
+                    f_copy["category"] = "bug"
+                if f_copy.get("severity") not in ["critical", "high", "medium", "low", "info"]:
+                    f_copy["severity"] = "medium"
+                findings_list.append(Finding(**f_copy))
+
+        response_dict = {
             "review_id": rev_id,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "mode": clean_mode,
@@ -102,10 +121,56 @@ class ReviewService:
             },
             "summary": summary_data,
             "metrics": metrics_data,
-            "findings": graph_output.get("findings", []),
+            "findings": [f.model_dump() for f in findings_list],
             "refactoring": refactoring_data,
             "execution_metadata": execution_metadata
         }
 
+        # 4. Attempt MongoDB Persistence (with Graceful Failure)
+        try:
+            doc = CodeReviewDocument(
+                review_id=rev_id,
+                created_at=datetime.now(timezone.utc),
+                mode=clean_mode,
+                original_code=norm_result.normalized_code,
+                input_metadata=InputMetadata(**response_dict["input_metadata"]),
+                summary=Summary(**summary_data),
+                metrics=Metrics(**metrics_data),
+                findings=findings_list,
+                refactoring=Refactoring(**refactoring_data),
+                execution_metadata=ExecutionMetadata(**execution_metadata),
+                status="completed"
+            )
+            await self.repo.create_review(doc)
+            await self.repo.save_findings(review_id=rev_id, findings=findings_list)
+            logger.info(f"Successfully persisted review {rev_id} to MongoDB Atlas.")
+        except Exception as db_err:
+            logger.warning(f"MongoDB persistence unavailable ({db_err}). Returning response without saving.")
+
+        return response_dict
+
+    async def get_review_by_id(self, review_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieves a single review record by review_id from MongoDB."""
+        try:
+            doc = await self.repo.get_review_by_id(review_id)
+            if doc:
+                findings = await self.repo.get_findings_by_review_id(review_id)
+                res = doc.model_dump(mode="json")
+                res["findings"] = [f.model_dump() for f in findings]
+                return res
+        except Exception as err:
+            logger.warning(f"Error fetching review {review_id} from DB: {err}")
+        return None
+
+    async def list_recent_reviews(self, limit: int = 20) -> List[Dict[str, Any]]:
+        """Lists recent review records from MongoDB sorted descending by creation time."""
+        try:
+            docs = await self.repo.list_reviews(limit=limit)
+            return [d.model_dump(mode="json") for d in docs]
+        except Exception as err:
+            logger.warning(f"Error listing reviews from DB: {err}")
+            return []
+
 
 review_service = ReviewService()
+
