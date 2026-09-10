@@ -34,7 +34,7 @@ class LLMRouter:
     MODEL_MAP = {
         "gemini": {
             "flash": "gemini-2.5-flash",
-            "pro": "gemini-2.5-pro",
+            "pro": "gemini-2.5-flash",
         },
         "mistral": {
             "flash": "codestral-latest",

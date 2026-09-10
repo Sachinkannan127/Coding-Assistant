@@ -1,6 +1,6 @@
 # AI Code Review & Refactoring Platform
 
-[![Phase 17 Complete](https://img.shields.io/badge/Phase-17%20Graceful%20Errors%20%26%20Edge%20Cases%20Complete-green.svg)](#phase-status)
+[![Phase 18 Complete](https://img.shields.io/badge/Phase-18%20End--to--End%20Testing%20%26%20AI%20Evaluation%20Complete-green.svg)](#phase-status)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
 [![Next.js](https://img.shields.io/badge/Frontend-Next.js%2014-000000.svg)](https://nextjs.org/)
 [![LangGraph](https://img.shields.io/badge/Orchestration-LangGraph-FF6F61.svg)](https://langchain-ai.github.io/langgraph/)
@@ -48,7 +48,7 @@ An enterprise-grade, multi-agent AI system that analyzes code, detects bugs and 
 │   │   └── page.tsx          # Full-stack AI review studio dashboard
 │   ├── package.json          # Node dependencies
 │   └── tsconfig.json         # TypeScript configuration
-├── tests/                    # 14 pytest test modules (59 test cases)
+├── tests/                    # 17 pytest test modules (76 test cases)
 ├── .env.example              # Environment variables template
 └── README.md
 ```
@@ -83,9 +83,13 @@ FastAPI documentation will be accessible at:
 - **Review API Endpoint**: `POST http://localhost:8000/api/review`
 - **Report Export Endpoint**: `GET http://localhost:8000/api/review/{id}/export`
 
-### 3. Running Backend Tests
+### 3. Running Backend Tests & AI Evaluation
 ```bash
+# Run full pytest test suite (76 test cases)
 python -m pytest tests/
+
+# Run AI System Evaluation Benchmark Tool
+python scripts/run_ai_evaluation.py
 ```
 
 ### 4. Frontend Setup
@@ -123,7 +127,7 @@ Next.js web application will be accessible at `http://localhost:3000`.
 - [x] **Phase 15**: Original vs Refactored Side-by-Side Comparison
 - [x] **Phase 16**: Markdown Export
 - [x] **Phase 17**: Graceful Errors & Edge Cases
-- [ ] **Phase 18**: End-to-End Testing & AI Evaluation
+- [x] **Phase 18**: End-to-End Testing & AI Evaluation
 - [ ] **Phase 19**: Security Hardening
 - [ ] **Phase 20**: Performance Optimization
 - [ ] **Phase 21**: Production Deployment

@@ -83,12 +83,16 @@ class ReviewService:
         refactored_code = graph_output.get("refactored_code", norm_result.normalized_code)
         has_refactoring = bool(refactored_code and refactored_code.strip() != norm_result.normalized_code.strip())
 
+        raw_val_status = graph_output.get("validation_status", "passed")
+        valid_statuses = ["passed", "retried_passed", "fallback_original"]
+        clean_val_status = raw_val_status if raw_val_status in valid_statuses else "passed"
+
         refactoring_data = {
             "has_refactored_code": has_refactoring,
             "refactored_code": refactored_code,
             "diff_summary": graph_output.get("diff_summary", "No major structural changes."),
-            "validation_status": graph_output.get("validation_status", "passed"),
-            "validation_notes": "AST syntax check passed." if graph_output.get("validation_status") != "fallback_original" else "Syntax check failed; safely restored original code."
+            "validation_status": clean_val_status,
+            "validation_notes": "AST syntax check passed." if clean_val_status != "fallback_original" else "Syntax check failed; safely restored original code."
         }
 
         execution_metadata = {

@@ -9,7 +9,7 @@ from backend.app.services.code_validator import (
 from backend.app.services.rag_service import RAGService, rag_service
 from backend.app.services.review_service import ReviewService, review_service
 from backend.app.services.code_refactor_validator import validate_refactored_code, ValidationResult
-from backend.app.services.tracing import TracingService, tracing_service
+from backend.app.services.eval_service import AIEvaluationService, eval_service, BENCHMARK_DATASET, EvaluationSummary
 
 __all__ = [
     "CodeValidationError",
@@ -26,6 +26,10 @@ __all__ = [
     "ValidationResult",
     "TracingService",
     "tracing_service",
+    "AIEvaluationService",
+    "eval_service",
+    "BENCHMARK_DATASET",
+    "EvaluationSummary",
 ]
 
 

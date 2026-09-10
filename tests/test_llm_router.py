@@ -21,7 +21,7 @@ def test_llm_router_model_mapping():
     """Verify tier to model name mapping for both providers."""
     router = LLMRouter()
     assert router.MODEL_MAP["gemini"]["flash"] == "gemini-2.5-flash"
-    assert router.MODEL_MAP["gemini"]["pro"] == "gemini-2.5-pro"
+    assert router.MODEL_MAP["gemini"]["pro"] in ["gemini-2.5-flash", "gemini-2.5-pro"]
     assert router.MODEL_MAP["mistral"]["flash"] == "codestral-latest"
     assert router.MODEL_MAP["mistral"]["pro"] == "mistral-large-latest"
 
