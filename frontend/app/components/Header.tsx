@@ -12,7 +12,8 @@ export default function Header({ backendStatus = "checking" }: HeaderProps) {
   const checkBackend = useCallback(async () => {
     setStatus("checking");
     try {
-      const res = await fetch("http://localhost:8000/health");
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005";
+      const res = await fetch(`${baseUrl}/health`);
       if (res.ok) {
         setStatus("connected");
       } else {

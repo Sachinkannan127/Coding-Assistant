@@ -30,7 +30,7 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app
 
 # Expose FastAPI Gateway Port
-EXPOSE 8000
+EXPOSE 8005
 
 # Run Uvicorn Production Server
-CMD ["python", "-m", "uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8005"]

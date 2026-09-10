@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     
     # API Gateway Config
     HOST: str = "0.0.0.0"
-    PORT: int = 8000
+    PORT: int = 8005
     CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
     
     # LLM Providers

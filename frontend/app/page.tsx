@@ -57,7 +57,8 @@ export default function Home() {
     const timeoutId = setTimeout(() => controller.abort(), 45000);
 
     try {
-      const response = await fetch("http://localhost:8000/api/review", {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005";
+      const response = await fetch(`${baseUrl}/api/review`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

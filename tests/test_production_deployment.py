@@ -14,7 +14,7 @@ def test_dockerfile_backend_exists():
     assert dockerfile.exists()
     content = dockerfile.read_text(encoding="utf-8")
     assert "FROM python:3.11-slim" in content
-    assert "EXPOSE 8000" in content
+    assert "EXPOSE 8005" in content
     assert "uvicorn" in content
 
 
@@ -37,7 +37,7 @@ def test_docker_compose_config():
     assert "services:" in content
     assert "backend:" in content
     assert "frontend:" in content
-    assert "8000:8000" in content
+    assert "8005:8005" in content
     assert "3000:3000" in content
     assert "healthcheck:" in content
 
