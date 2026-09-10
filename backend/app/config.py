@@ -1,13 +1,13 @@
 import os
 from pathlib import Path
-from typing import List, Union
+from typing import List
 import dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import field_validator
 
 # Automatically discover and load root .env file regardless of execution CWD
 _root_env = Path(__file__).resolve().parent.parent.parent / ".env"
 _backend_env = Path(__file__).resolve().parent.parent / ".env"
+
 if _root_env.exists():
     dotenv.load_dotenv(_root_env, override=True)
 elif _backend_env.exists():
@@ -15,31 +15,37 @@ elif _backend_env.exists():
 else:
     dotenv.load_dotenv(override=True)
 
+
 class Settings(BaseSettings):
+    """
+    Application Settings Manager powered by Pydantic Settings.
+    Loads configurations from environment variables and root .env file.
+    """
+    # Application Metadata
     APP_NAME: str = "AI Code Review & Refactoring Platform"
     APP_VERSION: str = "1.0.0"
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
-    
+
     # API Gateway Config
     HOST: str = "0.0.0.0"
     PORT: int = 8005
     CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
-    
-    # LLM Providers
-    GEMINI_API_KEY: str = "[ENCRYPTION_KEY]"
-    MISTRAL_API_KEY: str = "[ENCRYPTION_KEY]"
-    
-    # Vector Search & Persistence
-    MONGODB_URI: str = "mongodb+srv://sachinkannan0515_db_user:Sachin123@cluster0.xrpifmc.mongodb.net/?appName=Cluster0"
+
+    # Primary & Secondary LLM Provider Credentials
+    GEMINI_API_KEY: str = ""
+    MISTRAL_API_KEY: str = ""
+
+    # Database & Vector Persistence
+    MONGODB_URI: str = "mongodb://localhost:27017"
     MONGODB_DATABASE: str = "code_pilot"
-    
-    # Observability
+
+    # Observability (LangSmith Tracing)
     LANGCHAIN_TRACING_V2: bool = False
     LANGCHAIN_API_KEY: str = ""
     LANGCHAIN_PROJECT: str = "code-review-platform"
-    
-    # Security & Rate Limiting Config
+
+    # Security & Rate Limiting
     ENABLE_RATE_LIMITING: bool = True
     RATE_LIMIT_PER_MINUTE: int = 60
 
@@ -54,16 +60,20 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> List[str]:
+        """Parses CORS_ORIGINS string into a list of origins."""
         if isinstance(self.CORS_ORIGINS, str):
             return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
         return self.CORS_ORIGINS
 
 
+# Instantiated global settings object
 settings = Settings()
 
 
 def sanitize_credentials(text: str) -> str:
-    """Scrubs sensitive API keys and connection strings from error messages and log outputs."""
+    """
+    Scrubs sensitive API keys and connection strings from error messages and log outputs.
+    """
     if not text:
         return text
 
@@ -80,4 +90,3 @@ def sanitize_credentials(text: str) -> str:
             sanitized = sanitized.replace(val.strip(), "[REDACTED_API_KEY]")
 
     return sanitized
-
