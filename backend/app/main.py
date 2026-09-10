@@ -7,6 +7,14 @@ from backend.app.config import settings
 from backend.app.db.mongodb import db_manager, connect_mongodb
 from backend.app.api import review_router
 
+# Configure application-level logging to appear in the terminal
+# force=True ensures our config takes effect even if uvicorn already set up handlers
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s:     %(name)s - %(message)s",
+    force=True
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -16,12 +24,12 @@ async def lifespan(app: FastAPI):
     FastAPI Lifespan Context Manager.
     Handles application startup database connection initialization and graceful shutdown cleanup.
     """
-    logger.info("Application Startup: Connecting to MongoDB...")
+    print("INFO:     Connecting to MongoDB...")
     try:
         conn_res = await connect_mongodb()
-        logger.info(f"Application Startup Complete: MongoDB state '{conn_res['status']}' (Database: '{conn_res['database']}')")
+        print(f"INFO:     ✅ MongoDB connected (Database: '{conn_res['database']}', Status: '{conn_res['status']}')")
     except Exception as e:
-        logger.warning(f"Application Startup Warning: Could not connect to MongoDB on startup: {e}")
+        print(f"WARNING:  ⚠️ MongoDB connection failed on startup: {e}")
     
     yield
     

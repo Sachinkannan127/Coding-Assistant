@@ -20,10 +20,10 @@ class SampleStructuredOutput(BaseModel):
 def test_llm_router_model_mapping():
     """Verify tier to model name mapping for both providers."""
     router = LLMRouter()
-    assert router.MODEL_MAP["gemini"]["flash"] in ["gemini-flash-latest", "gemini-2.5-flash"]
-    assert router.MODEL_MAP["gemini"]["pro"] in ["gemini-pro-latest", "gemini-2.5-flash", "gemini-2.5-pro"]
+    assert router.MODEL_MAP["gemini"]["flash"] == "gemini-3.6-flash"
+    assert router.MODEL_MAP["gemini"]["pro"] == "gemini-3.6-flash"
     assert router.MODEL_MAP["mistral"]["flash"] == "codestral-latest"
-    assert router.MODEL_MAP["mistral"]["pro"] == "mistral-large-latest"
+    assert router.MODEL_MAP["mistral"]["pro"] == "codestral-latest"
 
 
 def test_format_messages():
@@ -61,7 +61,7 @@ async def test_generate_primary_gemini_success():
         res = await router.generate(messages="Test prompt", tier="flash")
         
         assert res.provider_used == "gemini"
-        assert res.model_name in ["gemini-flash-latest", "gemini-2.5-flash"]
+        assert res.model_name == "gemini-3.6-flash"
         assert res.fallback_triggered is False
         assert res.content == "Gemini response text"
         assert res.duration_ms >= 0
@@ -123,7 +123,7 @@ async def test_generate_structured_output():
     with patch.object(router, "_init_gemini", return_value=mock_gemini_model):
         res = await router.generate(
             messages="Analyze complexity",
-            tier="pro",
+            tier="flash",
             response_schema=SampleStructuredOutput
         )
 

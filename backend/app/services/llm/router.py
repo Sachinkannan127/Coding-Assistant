@@ -33,17 +33,17 @@ class LLMRouter:
 
     MODEL_MAP = {
         "gemini": {
-            "flash": "gemini-flash-latest",
-            "pro": "gemini-pro-latest",
+            "flash": "gemini-3.6-flash",
+            "pro": "gemini-3.6-flash",
         },
         "mistral": {
             "flash": "codestral-latest",
-            "pro": "mistral-large-latest",
+            "pro": "codestral-latest",
         }
     }
 
     def _init_gemini(self, tier: str, temperature: float) -> BaseChatModel:
-        model_name = self.MODEL_MAP["gemini"].get(tier, "gemini-2.5-flash")
+        model_name = self.MODEL_MAP["gemini"].get(tier, "gemini-3.6-flash")
         api_key = settings.GEMINI_API_KEY.strip()
         if not api_key:
             raise ValueError("GEMINI_API_KEY is missing or empty.")
