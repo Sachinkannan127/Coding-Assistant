@@ -1,8 +1,19 @@
 import os
 from pathlib import Path
 from typing import List, Union
+import dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator
+
+# Automatically discover and load root .env file regardless of execution CWD
+_root_env = Path(__file__).resolve().parent.parent.parent / ".env"
+_backend_env = Path(__file__).resolve().parent.parent / ".env"
+if _root_env.exists():
+    dotenv.load_dotenv(_root_env, override=True)
+elif _backend_env.exists():
+    dotenv.load_dotenv(_backend_env, override=True)
+else:
+    dotenv.load_dotenv(override=True)
 
 class Settings(BaseSettings):
     APP_NAME: str = "AI Code Review & Refactoring Platform"
@@ -16,11 +27,11 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
     
     # LLM Providers
-    GEMINI_API_KEY: str = ""
-    MISTRAL_API_KEY: str = ""
+    GEMINI_API_KEY: str = "[ENCRYPTION_KEY]"
+    MISTRAL_API_KEY: str = "[ENCRYPTION_KEY]"
     
     # Vector Search & Persistence
-    MONGODB_URI: str = "mongodb://localhost:27017"
+    MONGODB_URI: str = "mongodb+srv://sachinkannan0515_db_user:Sachin123@cluster0.xrpifmc.mongodb.net/?appName=Cluster0"
     MONGODB_DATABASE: str = "code_pilot"
     
     # Observability
