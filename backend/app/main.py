@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.config import settings
-from backend.app.db.mongodb import db_manager
+from backend.app.db.mongodb import db_manager, connect_mongodb
 from backend.app.api import review_router
 
 logger = logging.getLogger(__name__)
@@ -14,17 +14,18 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """
     FastAPI Lifespan Context Manager.
-    Handles startup database connection initialization and graceful shutdown cleanup.
+    Handles application startup database connection initialization and graceful shutdown cleanup.
     """
-    logger.info("Initializing application resources...")
+    logger.info("Application Startup: Connecting to MongoDB...")
     try:
-        await db_manager.connect()
+        conn_res = await connect_mongodb()
+        logger.info(f"Application Startup Complete: MongoDB state '{conn_res['status']}' (Database: '{conn_res['database']}')")
     except Exception as e:
-        logger.warning(f"Could not connect to MongoDB on startup: {e}")
+        logger.warning(f"Application Startup Warning: Could not connect to MongoDB on startup: {e}")
     
     yield
     
-    logger.info("Shutting down application resources...")
+    logger.info("Application Shutdown: Closing database connection...")
     await db_manager.close()
 
 
