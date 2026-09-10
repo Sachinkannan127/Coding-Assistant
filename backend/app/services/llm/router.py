@@ -6,7 +6,7 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, AI
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_mistralai import ChatMistralAI
-from backend.app.config import settings
+from backend.app.config import settings, sanitize_credentials
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +137,7 @@ class LLMRouter:
             )
 
         except Exception as primary_error:
-            primary_error_msg = str(primary_error)
+            primary_error_msg = sanitize_credentials(str(primary_error))
             logger.warning(f"Primary Gemini provider failed ({primary_error_msg}). Initiating Mistral fallback...")
 
         # 2. Attempt Fallback Provider: Mistral AI
@@ -167,7 +167,7 @@ class LLMRouter:
 
         except Exception as fallback_error:
             elapsed_ms = int((time.perf_counter() - start_time) * 1000)
-            fallback_error_msg = str(fallback_error)
+            fallback_error_msg = sanitize_credentials(str(fallback_error))
             logger.error(f"Both primary (Gemini) and fallback (Mistral) LLM providers failed: {fallback_error_msg}")
             raise RuntimeError(
                 f"LLM Router generation failed. Primary (Gemini): {primary_error_msg} | Fallback (Mistral): {fallback_error_msg}"

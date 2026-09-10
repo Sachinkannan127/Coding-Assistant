@@ -37,6 +37,12 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+from backend.app.middleware import SecurityHeadersMiddleware, RateLimiterMiddleware
+
+# Security Headers & Rate Limiter Middleware
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RateLimiterMiddleware, rate_limit_per_minute=settings.RATE_LIMIT_PER_MINUTE)
+
 # CORS Middleware
 app.add_middleware(
     CORSMiddleware,
