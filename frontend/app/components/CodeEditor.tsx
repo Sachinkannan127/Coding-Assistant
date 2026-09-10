@@ -13,6 +13,9 @@ interface CodeEditorProps {
   setReviewMode: (val: "quick" | "deep") => void;
   onSubmit: () => void;
   loading: boolean;
+  onExecuteSandbox?: () => void;
+  sandboxLoading?: boolean;
+  onExplainCode?: () => void;
 }
 
 const PRESET_SAMPLES = [
@@ -94,6 +97,9 @@ export default function CodeEditor({
   setReviewMode,
   onSubmit,
   loading,
+  onExecuteSandbox,
+  sandboxLoading = false,
+  onExplainCode,
 }: CodeEditorProps) {
   const lineCount = useMemo(() => {
     if (!code) return 1;
@@ -247,8 +253,20 @@ export default function CodeEditor({
         </div>
       </div>
 
-      {/* Action Button */}
-      <div style={{ marginTop: "1.25rem", display: "flex", justifyContent: "flex-end" }}>
+      {/* Action Buttons */}
+      <div style={{ marginTop: "1.25rem", display: "flex", justifyContent: "flex-end", gap: "0.75rem", flexWrap: "wrap" }}>
+        {onExplainCode && (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={onExplainCode}
+            disabled={!code.trim() || isExceedingLimit}
+            style={{ padding: "0.875rem 1.5rem", fontSize: "0.95rem", borderColor: "rgba(168, 85, 247, 0.5)", color: "#c084fc" }}
+          >
+            <span>💡 Explain Code (Simple English)</span>
+          </button>
+        )}
+
         <button
           type="button"
           className="btn btn-primary"

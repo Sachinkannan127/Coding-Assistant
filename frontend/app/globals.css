@@ -816,13 +816,18 @@ body {
 }
 
 .btn-back-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
-  padding: 0.35rem 0.85rem;
+  padding: 0.4rem 0.9rem;
   border-radius: 9999px;
   font-size: 0.8125rem;
   font-weight: 600;
+  line-height: 1;
   cursor: pointer;
   transition: all 0.2s ease;
 }

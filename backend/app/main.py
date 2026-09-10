@@ -5,7 +5,7 @@ from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.config import settings
 from backend.app.db.mongodb import db_manager, connect_mongodb
-from backend.app.api import review_router
+from backend.app.api import review_router, sandbox_router, explain_router
 
 # Configure application-level logging to appear in the terminal
 # force=True ensures our config takes effect even if uvicorn already set up handlers
@@ -63,6 +63,8 @@ app.add_middleware(
 
 # Register API Routers
 app.include_router(review_router, prefix="/api", tags=["Code Reviews"])
+app.include_router(sandbox_router, prefix="/api", tags=["Code Sandbox"])
+app.include_router(explain_router, prefix="/api", tags=["Code Explanation"])
 
 
 @app.get(

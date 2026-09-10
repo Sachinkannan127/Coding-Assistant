@@ -12,6 +12,7 @@ interface RefactoringDiffProps {
   languageDetected?: string;
   findings?: Finding[];
   onApplyCode?: (code: string) => void;
+  onTestRefactoredCode?: (code: string) => void;
 }
 
 export default function RefactoringDiff({
@@ -22,6 +23,7 @@ export default function RefactoringDiff({
   languageDetected = "python",
   findings = [],
   onApplyCode,
+  onTestRefactoredCode,
 }: RefactoringDiffProps) {
   const [viewMode, setViewMode] = useState<"split" | "unified">("split");
   const [copied, setCopied] = useState(false);
@@ -160,6 +162,17 @@ export default function RefactoringDiff({
           >
             {copied ? "✓ Copied!" : "📋 Copy"}
           </button>
+
+          {onTestRefactoredCode && refactoredCode && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              style={{ fontSize: "0.75rem", borderColor: "rgba(168, 85, 247, 0.5)", color: "#c084fc" }}
+              onClick={() => onTestRefactoredCode(refactoredCode)}
+            >
+              ▶ Test in Sandbox
+            </button>
+          )}
 
           {onApplyCode && (
             <button

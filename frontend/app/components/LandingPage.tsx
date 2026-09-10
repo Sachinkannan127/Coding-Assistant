@@ -300,7 +300,7 @@ export default function LandingPage({ onLaunchStudio }: LandingPageProps) {
             </button>
             <a href="#sandbox" className="btn-hero-secondary">
               <Play className="w-4 h-4 mr-2 text-cyan-400" />
-              Explore Interactive Sandbox
+              Explore Live Demo
             </a>
           </div>
 

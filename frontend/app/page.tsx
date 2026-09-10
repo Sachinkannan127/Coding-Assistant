@@ -8,7 +8,10 @@ import ReviewSummary from "./components/ReviewSummary";
 import MetricsDashboard from "./components/MetricsDashboard";
 import FindingsExplorer from "./components/FindingsExplorer";
 import RefactoringDiff from "./components/RefactoringDiff";
-import { Sparkles, ArrowLeft, Layout, Code2 } from "lucide-react";
+import CodeSandbox, { ExecutionResult } from "./components/CodeSandbox";
+import CompilerSandboxView from "./components/CompilerSandboxView";
+import CodeExplanationModal from "./components/CodeExplanationModal";
+import { Sparkles, ArrowLeft, Layout, Code2, Terminal } from "lucide-react";
 
 const DEFAULT_SAMPLE = `def calculate_user_discount(user, cart_items):
     # Calculate initial subtotal
@@ -29,7 +32,7 @@ const DEFAULT_SAMPLE = `def calculate_user_discount(user, cart_items):
 const MAX_CHAR_LIMIT = 50000; // 50 KB ceiling
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<"landing" | "studio">("landing");
+  const [currentView, setCurrentView] = useState<"landing" | "studio" | "compiler">("landing");
 
   const [code, setCode] = useState<string>(DEFAULT_SAMPLE);
   const [language, setLanguage] = useState<string>("auto");
@@ -40,6 +43,58 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [reviewResult, setReviewResult] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState<"summary" | "findings" | "metrics" | "diff">("summary");
+
+  // Code Sandbox Execution State
+  const [sandboxLoading, setSandboxLoading] = useState<boolean>(false);
+  const [sandboxResult, setSandboxResult] = useState<ExecutionResult | null>(null);
+  const [showSandbox, setShowSandbox] = useState<boolean>(false);
+
+  // Code Explanation Modal State
+  const [showExplanationModal, setShowExplanationModal] = useState<boolean>(false);
+
+  const handleExecuteSandbox = async (targetCode?: string, stdinData: string = "") => {
+    const codeToRun = targetCode || code;
+    if (!codeToRun || !codeToRun.trim()) {
+      setError("Code input cannot be empty for sandbox execution.");
+      return;
+    }
+
+    setSandboxLoading(true);
+    setShowSandbox(true);
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005";
+      const response = await fetch(`${baseUrl}/api/sandbox/execute`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: codeToRun,
+          language: language,
+          stdin_data: stdinData,
+          timeout_seconds: 5
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Sandbox Error: ${response.status} ${response.statusText}`);
+      }
+
+      const data: ExecutionResult = await response.json();
+      setSandboxResult(data);
+    } catch (err: any) {
+      setSandboxResult({
+        stdout: "",
+        stderr: `Sandbox Execution Error: ${err.message || "Failed to communicate with sandbox runner backend."}`,
+        exit_code: 1,
+        status: "error",
+        execution_time_ms: 0,
+        language_used: language
+      });
+    } finally {
+      setSandboxLoading(false);
+    }
+  };
 
   const handleReviewSubmit = async () => {
     // 1. Client-Side Input Validation
@@ -120,6 +175,9 @@ export default function Home() {
       {currentView === "landing" ? (
         /* PREMIUM LANDING PAGE VIEW */
         <LandingPage onLaunchStudio={handleLaunchStudio} />
+      ) : currentView === "compiler" ? (
+        /* INTERACTIVE COMPILER SANDBOX WORKSPACE VIEW */
+        <CompilerSandboxView onSwitchView={setCurrentView} />
       ) : (
         /* AI STUDIO WORKSPACE VIEW */
         <main className="container fade-in" style={{ paddingTop: "2rem" }}>
@@ -132,7 +190,8 @@ export default function Home() {
                   onClick={() => setCurrentView("landing")}
                   className="btn-back-pill"
                 >
-                  <ArrowLeft className="w-4 h-4 mr-1 inline" /> Back to Overview
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back to Overview</span>
                 </button>
                 <h1 style={{ fontSize: "1.75rem", fontWeight: 800, letterSpacing: "-0.02em" }}>
                   AI Code Review & Refactoring Studio Workspace
@@ -165,8 +224,8 @@ export default function Home() {
           )}
 
           <div className="app-grid">
-            {/* Left Column: Code Input Workspace */}
-            <div>
+            {/* Left Column: Code Input Workspace & Sandbox Terminal */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
               <CodeEditor
                 code={code}
                 setCode={setCode}
@@ -178,7 +237,24 @@ export default function Home() {
                 setReviewMode={setReviewMode}
                 onSubmit={handleReviewSubmit}
                 loading={loading}
+                onExecuteSandbox={() => handleExecuteSandbox(code)}
+                sandboxLoading={sandboxLoading}
+                onExplainCode={() => setShowExplanationModal(true)}
               />
+
+              {(showSandbox || sandboxResult || sandboxLoading) && (
+                <CodeSandbox
+                  code={code}
+                  language={language}
+                  onExecute={(stdinData) => handleExecuteSandbox(code, stdinData)}
+                  loading={sandboxLoading}
+                  result={sandboxResult}
+                  onClear={() => {
+                    setSandboxResult(null);
+                    setShowSandbox(false);
+                  }}
+                />
+              )}
             </div>
 
             {/* Right Column: Review Results & Analysis Dashboard */}
@@ -290,6 +366,7 @@ export default function Home() {
                       languageDetected={reviewResult.language_detected || reviewResult.input_metadata?.language || language}
                       findings={reviewResult.findings || []}
                       onApplyCode={handleApplyRefactoredCode}
+                      onTestRefactoredCode={(refactored) => handleExecuteSandbox(refactored)}
                     />
                   )}
                 </div>
@@ -298,6 +375,13 @@ export default function Home() {
           </div>
         </main>
       )}
+
+      <CodeExplanationModal
+        isOpen={showExplanationModal}
+        onClose={() => setShowExplanationModal(false)}
+        code={code}
+        language={language}
+      />
     </div>
   );
 }

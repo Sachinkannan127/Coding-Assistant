@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { Zap, Sparkles, RefreshCw } from "lucide-react";
+import { Zap, Sparkles, RefreshCw, Terminal, Code } from "lucide-react";
 
 interface LandingHeaderProps {
-  currentView: "landing" | "studio";
-  onSwitchView: (view: "landing" | "studio") => void;
+  currentView: "landing" | "studio" | "compiler";
+  onSwitchView: (view: "landing" | "studio" | "compiler") => void;
 }
 
 export default function LandingHeader({ currentView, onSwitchView }: LandingHeaderProps) {
@@ -55,13 +55,13 @@ export default function LandingHeader({ currentView, onSwitchView }: LandingHead
           </div>
           <div>
             <div className="logo-text">CodePilot AI</div>
-            <div className="logo-tagline">Multi-Agent Code Review & Refactoring</div>
+            <div className="logo-tagline">Multi-Agent Code Review & Sandbox</div>
           </div>
         </div>
 
         {/* Center Nav Links */}
         <nav className="nav-links">
-          {currentView === "landing" && (
+          {currentView === "landing" ? (
             <>
               <a href="#features" className="nav-link">Features</a>
               <a href="#architecture" className="nav-link">8-Agent Engine</a>
@@ -70,6 +70,17 @@ export default function LandingHeader({ currentView, onSwitchView }: LandingHead
               <a href="#pricing" className="nav-link">Pricing</a>
               <a href="#faq" className="nav-link">FAQ</a>
             </>
+          ) : (
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button
+                type="button"
+                className={`nav-link ${currentView === "studio" ? "active" : ""}`}
+                onClick={() => onSwitchView("studio")}
+                style={{ background: currentView === "studio" ? "rgba(99, 102, 241, 0.2)" : "transparent", padding: "0.35rem 0.75rem", borderRadius: "6px" }}
+              >
+                <Code className="w-4 h-4 mr-1 inline" /> AI Review Studio
+              </button>
+            </div>
           )}
         </nav>
 
@@ -97,16 +108,18 @@ export default function LandingHeader({ currentView, onSwitchView }: LandingHead
             </span>
           )}
 
-          {/* Primary CTA */}
+          {/* Primary CTAs on Landing Page */}
           {currentView === "landing" && (
-            <button
-              type="button"
-              className="btn-launch-primary"
-              onClick={() => onSwitchView("studio")}
-            >
-              <Sparkles className="w-4 h-4 mr-1.5 inline" />
-              Launch Studio
-            </button>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button
+                type="button"
+                className="btn-launch-primary"
+                onClick={() => onSwitchView("studio")}
+              >
+                <Sparkles className="w-4 h-4 mr-1.5 inline" />
+                Launch Studio
+              </button>
+            </div>
           )}
         </div>
       </div>
