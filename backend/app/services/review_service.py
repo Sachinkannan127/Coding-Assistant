@@ -179,6 +179,42 @@ class ReviewService:
             logger.warning(f"Error listing reviews from DB: {err}")
             return []
 
+    async def stream_review(
+        self,
+        code: str,
+        language: str = "auto",
+        mode: str = "quick",
+        review_id: Optional[str] = None
+    ):
+        """
+        Async generator yielding SSE events for real-time progress and final review result payload.
+        """
+        rev_id = review_id or f"rev_{uuid.uuid4().hex[:12]}"
+        clean_mode = mode.lower().strip() if mode else "quick"
+
+        # Event 1: Initialized
+        yield f"data: {{\"event\": \"status\", \"review_id\": \"{rev_id}\", \"status\": \"started\", \"mode\": \"{clean_mode}\"}}\n\n"
+
+        # Event 2: Validation
+        yield f"data: {{\"event\": \"progress\", \"step\": \"validation\", \"status\": \"completed\"}}\n\n"
+
+        # Event 3: Workflow Graph Execution
+        yield f"data: {{\"event\": \"progress\", \"step\": \"graph_execution\", \"status\": \"running\"}}\n\n"
+
+        try:
+            result_payload = await self.run_review(
+                code=code,
+                language=language,
+                mode=clean_mode,
+                review_id=rev_id
+            )
+            yield f"data: {{\"event\": \"progress\", \"step\": \"graph_execution\", \"status\": \"completed\"}}\n\n"
+            import json
+            yield f"data: {{\"event\": \"result\", \"payload\": {json.dumps(result_payload)}}}\n\n"
+        except Exception as err:
+            logger.error(f"Error in streaming review {rev_id}: {err}")
+            yield f"data: {{\"event\": \"error\", \"detail\": \"{str(err)}\"}}\n\n"
+
 
 review_service = ReviewService()
 

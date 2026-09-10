@@ -151,6 +151,38 @@ async def submit_review(payload: ReviewRequest) -> Dict[str, Any]:
         )
 
 
+@router.post(
+    "/review/stream",
+    summary="Submit Code for Streaming AI Review",
+    description="Streams real-time progress events and chunked review outputs via Server-Sent Events (SSE)."
+)
+async def stream_review_endpoint(payload: ReviewRequest):
+    """POST /api/review/stream SSE endpoint handler."""
+    from fastapi.responses import StreamingResponse
+    try:
+        return StreamingResponse(
+            review_service.stream_review(
+                code=payload.code,
+                language=payload.language,
+                mode=payload.mode
+            ),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no"
+            }
+        )
+    except CodeValidationError as val_err:
+        raise val_err
+    except Exception as exc:
+        logger.error(f"Unexpected error executing streaming review API: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to execute streaming code review: {str(exc)}"
+        )
+
+
 @router.get(
     "/review/{review_id}",
     status_code=status.HTTP_200_OK,
