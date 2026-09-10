@@ -1,0 +1,11 @@
+.git
+.gitignore
+.env
+.pytest_cache
+.next
+node_modules
+venv
+__pycache__
+*.pyc
+scratch
+artifacts

@@ -1,6 +1,6 @@
 # AI Code Review & Refactoring Platform
 
-[![Phase 20 Complete](https://img.shields.io/badge/Phase-20%20Performance%20Optimization%20%26%20Streaming%20Complete-green.svg)](#phase-status)
+[![Phase 21 Complete](https://img.shields.io/badge/Phase-21%20Production%20Deployment%20Complete-green.svg)](#phase-status)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
 [![Next.js](https://img.shields.io/badge/Frontend-Next.js%2014-000000.svg)](https://nextjs.org/)
 [![LangGraph](https://img.shields.io/badge/Orchestration-LangGraph-FF6F61.svg)](https://langchain-ai.github.io/langgraph/)
@@ -48,7 +48,7 @@ An enterprise-grade, multi-agent AI system that analyzes code, detects bugs and 
 │   │   └── page.tsx          # Full-stack AI review studio dashboard
 │   ├── package.json          # Node dependencies
 │   └── tsconfig.json         # TypeScript configuration
-├── tests/                    # 18 pytest test modules (84 test cases)
+├── tests/                    # 19 pytest test modules (89 test cases)
 ├── .env.example              # Environment variables template
 └── README.md
 ```
@@ -106,6 +106,12 @@ npm run dev
 ```
 Next.js web application will be accessible at `http://localhost:3000`.
 
+### 5. Production Container Deployment (Docker Compose)
+```bash
+# Build and launch production containers
+docker-compose up --build
+```
+
 ---
 
 ## 📍 Implementation Roadmap
@@ -131,5 +137,5 @@ Next.js web application will be accessible at `http://localhost:3000`.
 - [x] **Phase 18**: End-to-End Testing & AI Evaluation
 - [x] **Phase 19**: Security Hardening
 - [x] **Phase 20**: Performance Optimization
-- [ ] **Phase 21**: Production Deployment
+- [x] **Phase 21**: Production Deployment
 - [ ] **Phase 22**: Documentation & v1.0 Release
