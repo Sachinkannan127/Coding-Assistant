@@ -10,7 +10,7 @@ export function formatReviewToMarkdown(review: any, originalCode?: string): stri
   const mode = (review?.review_mode || "quick").toUpperCase();
   const execTime = review?.execution_time_seconds ? `${review.execution_time_seconds.toFixed(2)}s` : "N/A";
   const modelUsed = review?.model_used || "gemini-2.5-flash";
-  const language = review?.language_detected || "auto";
+  const language = review?.language_detected || review?.input_metadata?.language || "auto";
 
   const metrics = review?.metrics || {};
   const findings = review?.findings || [];

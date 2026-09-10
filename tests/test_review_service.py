@@ -39,6 +39,7 @@ async def test_review_service_quick_mode():
         assert res["mode"] == "quick"
         assert res["summary"]["verdict"] == "clean"
         assert res["input_metadata"]["language"] == "python"
+        assert res["language_detected"] == "python"
         assert res["execution_metadata"]["rag_context_used"] is False
         assert res["execution_metadata"]["total_duration_ms"] >= 0
         mock_run.assert_called_once()

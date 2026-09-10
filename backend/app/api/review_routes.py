@@ -18,7 +18,7 @@ def format_review_markdown(review: dict) -> str:
     summary = review.get("executive_summary", "")
     mode = review.get("review_mode", "quick")
     exec_time = review.get("execution_time_seconds", 0)
-    lang = review.get("language_detected", "auto")
+    lang = review.get("language_detected") or review.get("input_metadata", {}).get("language", "auto")
     model = review.get("model_used", "gemini-2.5-flash")
 
     metrics = review.get("metrics", {})

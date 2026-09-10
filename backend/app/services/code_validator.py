@@ -62,33 +62,33 @@ def detect_language(code: str, requested_language: str = "auto") -> str:
 
     # 2. Language Signals
     # Rust
-    if re.search(r"(fn\s+\w+|let\s+mut\s+|impl\s+|pub\s+fn|println!|use\s+std::)", code_text):
+    if re.search(r"(fn\s+\w+|let\s+mut\s+|impl\s+|pub\s+fn|println!|eprintln!|use\s+std::|match\s+\w+|Ok\(|Err\(|#\[derive\()", code_text):
         return "rust"
 
     # Go
-    if re.search(r"(package\s+main|func\s+main|fmt\.Println|func\s+\(.*\)|import\s+\()", code_text):
+    if re.search(r"(package\s+\w+|func\s+\w+|func\s+\(|fmt\.|import\s+\(|go\s+func|chan\s+|:=)", code_text):
         return "go"
 
     # Java
-    if re.search(r"(public\s+class\s+|public\s+static\s+void\s+main|System\.out\.println|import\s+java\.)", code_text):
+    if re.search(r"(public\s+class\s+|public\s+static\s+void\s+main|System\.out\.|import\s+java\.|import\s+javax\.|@Override|@SpringBootApplication)", code_text):
         return "java"
 
     # C++ vs C
-    if re.search(r"(#include\s*<iostream>|std::|cout\s*<<|cin\s*>>|namespace\s+\w+|template\s*<|public:|private:|protected:)", code_text):
+    if re.search(r"(#include\s*<(iostream|vector|string|map|set|algorithm|memory|utility|sstream|fstream)>|std::|cout\s*<<|cin\s*>>|namespace\s+\w+|template\s*<|public:|private:|protected:|new\s+\w+\()", code_text):
         return "cpp"
-    if re.search(r"(#include\s*<stdio\.h>|#include\s*<stdlib\.h>|printf\(|scanf\(|malloc\(|free\(|struct\s+\w+\s*\{)", code_text):
+    if re.search(r"(#include\s*<[a-zA-Z0-9_/]+\.h>|printf\(|scanf\(|malloc\(|free\(|struct\s+\w+\s*\{|typedef\s+struct|int\s+main\s*\()", code_text):
         return "c"
 
     # TypeScript
-    if re.search(r"(interface\s+\w+|type\s+\w+\s*=|:\s*(string|number|boolean|any|void|unknown)|as\s+\w+)", code_text):
+    if re.search(r"(interface\s+\w+|type\s+\w+\s*=|:\s*(string|number|boolean|any|void|unknown|never|object|Array)|as\s+\w+|enum\s+\w+)", code_text):
         return "typescript"
 
     # JavaScript
-    if re.search(r"(const\s+|let\s+|var\s+|function\s+\w+|console\.log|=>|async\s+function|export\s+default)", code_text):
+    if re.search(r"(const\s+|let\s+|var\s+|function\s+\w+|function\s*\(|console\.log|=>|async\s+function|export\s+default|document\.|window\.)", code_text):
         return "javascript"
 
     # Python
-    if re.search(r"(def\s+\w+|class\s+\w+|import\s+\w+|from\s+\w+\s+import|elif\s+|self\.|__init__|print\()", code_text):
+    if re.search(r"(def\s+\w+|class\s+\w+|import\s+\w+|from\s+\w+\s+import|elif\s+|self\.|__init__|print\(|if\s+__name__\s*==|raise\s+\w+|except\s+|with\s+open)", code_text):
         return "python"
 
     return "python" if cleaned_lang == "auto" else cleaned_lang
