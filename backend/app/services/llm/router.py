@@ -89,6 +89,12 @@ class LLMRouter:
                 formatted.append(HumanMessage(content=str(msg)))
         return formatted
 
+    def _init_provider(self, provider: str, tier: str, temperature: float) -> BaseChatModel:
+        if provider == "gemini":
+            return self._init_gemini(tier=tier, temperature=temperature)
+        else:
+            return self._init_mistral(tier=tier, temperature=temperature)
+
     async def generate(
         self,
         messages: Union[str, List[Any]],
@@ -97,40 +103,42 @@ class LLMRouter:
         response_schema: Optional[Type[BaseModel]] = None
     ) -> LLMResponse:
         """
-        Execute LLM generation with primary Gemini model and fallback to Mistral.
-        
-        Args:
-            messages: Prompt string or list of LangChain/dictionary messages.
-            tier: Execution tier ('flash' for rapid speed, 'pro' for deep reasoning).
-            temperature: LLM sampling temperature.
-            response_schema: Optional Pydantic model for structured output parsing.
-
-        Returns:
-            LLMResponse object containing generated output and telemetry metadata.
+        Execute LLM generation with dynamic primary and fallback provider routing based on execution tier:
+        - Tier 'flash' / 'mini': Primary is Google Gemini (gemini-2.5-flash) with Mistral fallback.
+        - Tier 'pro' / 'deep': Primary is Mistral AI (mistral-large-latest) with Gemini fallback.
         """
         formatted_messages = self._format_messages(messages)
         start_time = time.perf_counter()
         primary_error_msg: Optional[str] = None
 
-        # 1. Attempt Primary Provider: Google Gemini
+        # Determine primary and fallback providers based on tier selection
+        clean_tier = tier.lower().strip() if tier else "flash"
+        if clean_tier == "pro":
+            primary_provider = "mistral"
+            fallback_provider = "gemini"
+        else:
+            primary_provider = "gemini"
+            fallback_provider = "mistral"
+
+        # 1. Attempt Primary Provider
         try:
-            logger.info(f"Invoking primary LLM provider (Gemini - tier: '{tier}')...")
-            gemini_model = self._init_gemini(tier=tier, temperature=temperature)
+            logger.info(f"Invoking primary LLM provider ('{primary_provider}' - tier: '{clean_tier}')...")
+            primary_model = self._init_provider(provider=primary_provider, tier=clean_tier, temperature=temperature)
             
             if response_schema:
-                runnable = gemini_model.with_structured_output(response_schema)
+                runnable = primary_model.with_structured_output(response_schema)
                 raw_response = await runnable.ainvoke(formatted_messages)
                 content = raw_response
             else:
-                raw_response = await gemini_model.ainvoke(formatted_messages)
+                raw_response = await primary_model.ainvoke(formatted_messages)
                 content = raw_response.content
 
             elapsed_ms = int((time.perf_counter() - start_time) * 1000)
-            model_name = self.MODEL_MAP["gemini"].get(tier, "gemini-2.5-flash")
+            model_name = self.MODEL_MAP[primary_provider].get(clean_tier, self.MODEL_MAP[primary_provider]["flash"])
             
             return LLMResponse(
                 content=content,
-                provider_used="gemini",
+                provider_used=primary_provider,
                 model_name=model_name,
                 fallback_triggered=False,
                 duration_ms=elapsed_ms
@@ -138,27 +146,27 @@ class LLMRouter:
 
         except Exception as primary_error:
             primary_error_msg = sanitize_credentials(str(primary_error))
-            logger.warning(f"Primary Gemini provider failed ({primary_error_msg}). Initiating Mistral fallback...")
+            logger.warning(f"Primary '{primary_provider}' provider failed ({primary_error_msg}). Initiating '{fallback_provider}' fallback...")
 
-        # 2. Attempt Fallback Provider: Mistral AI
+        # 2. Attempt Fallback Provider
         try:
-            logger.info(f"Invoking fallback LLM provider (Mistral - tier: '{tier}')...")
-            mistral_model = self._init_mistral(tier=tier, temperature=temperature)
+            logger.info(f"Invoking fallback LLM provider ('{fallback_provider}' - tier: '{clean_tier}')...")
+            fallback_model = self._init_provider(provider=fallback_provider, tier=clean_tier, temperature=temperature)
 
             if response_schema:
-                runnable = mistral_model.with_structured_output(response_schema)
+                runnable = fallback_model.with_structured_output(response_schema)
                 raw_response = await runnable.ainvoke(formatted_messages)
                 content = raw_response
             else:
-                raw_response = await mistral_model.ainvoke(formatted_messages)
+                raw_response = await fallback_model.ainvoke(formatted_messages)
                 content = raw_response.content
 
             elapsed_ms = int((time.perf_counter() - start_time) * 1000)
-            model_name = self.MODEL_MAP["mistral"].get(tier, "codestral-latest")
+            model_name = self.MODEL_MAP[fallback_provider].get(clean_tier, self.MODEL_MAP[fallback_provider]["flash"])
 
             return LLMResponse(
                 content=content,
-                provider_used="mistral",
+                provider_used=fallback_provider,
                 model_name=model_name,
                 fallback_triggered=True,
                 duration_ms=elapsed_ms,
@@ -168,9 +176,9 @@ class LLMRouter:
         except Exception as fallback_error:
             elapsed_ms = int((time.perf_counter() - start_time) * 1000)
             fallback_error_msg = sanitize_credentials(str(fallback_error))
-            logger.error(f"Both primary (Gemini) and fallback (Mistral) LLM providers failed: {fallback_error_msg}")
+            logger.error(f"Both primary ('{primary_provider}') and fallback ('{fallback_provider}') LLM providers failed: {fallback_error_msg}")
             raise RuntimeError(
-                f"LLM Router generation failed. Primary (Gemini): {primary_error_msg} | Fallback (Mistral): {fallback_error_msg}"
+                f"LLM Router generation failed. Primary ({primary_provider}): {primary_error_msg} | Fallback ({fallback_provider}): {fallback_error_msg}"
             ) from fallback_error
 
 
