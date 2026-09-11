@@ -1,0 +1,46 @@
+{
+  "mcpServers": {
+    "codepilot-static-analysis": {
+      "command": "python",
+      "args": ["-m", "backend.app.mcp.static_analysis_mcp"],
+      "url": "http://localhost:8005/api/v1/mcp/call",
+      "description": "🥇 Static Analysis MCP: AST syntax parsing, cyclomatic complexity calculations, and code smell detection."
+    },
+    "codepilot-security-scanner": {
+      "command": "python",
+      "args": ["-m", "backend.app.mcp.security_scanner_mcp"],
+      "url": "http://localhost:8005/api/v1/mcp/call",
+      "description": "🥇 Security Scanner MCP: OWASP Top 10 vulnerability checks, SQL injection detection, XSS, and hardcoded secrets scanner."
+    },
+    "codepilot-github": {
+      "command": "python",
+      "args": ["-m", "backend.app.mcp.github_mcp"],
+      "url": "http://localhost:8005/api/v1/mcp/call",
+      "description": "🥈 GitHub MCP Connector: Pull Request inspection, repository file fetching, and commit diff analysis."
+    },
+    "codepilot-filesystem": {
+      "command": "python",
+      "args": ["-m", "backend.app.mcp.filesystem_mcp"],
+      "url": "http://localhost:8005/api/v1/mcp/call",
+      "description": "🥈 Filesystem MCP: Multi-file project access, repository tree inspection, and codebase grep searching."
+    },
+    "codepilot-doc-fetch": {
+      "command": "python",
+      "args": ["-m", "backend.app.mcp.doc_fetch_mcp"],
+      "url": "http://localhost:8005/api/v1/mcp/call",
+      "description": "🥉 Documentation / Fetch MCP: RAG vector context retrieval and language/framework styleguide documentation lookup."
+    },
+    "codepilot-git": {
+      "command": "python",
+      "args": ["-m", "backend.app.mcp.git_mcp"],
+      "url": "http://localhost:8005/api/v1/mcp/call",
+      "description": "⚙️ Git MCP: Local Git history, working tree status, branch tracking, and commit diffs."
+    },
+    "codepilot-sandbox": {
+      "command": "python",
+      "args": ["-m", "backend.app.mcp.sandbox_mcp"],
+      "url": "http://localhost:8005/api/v1/mcp/call",
+      "description": "🧪 Sandbox Execution MCP: Isolated subprocess runner for code execution and automated test case synthesis."
+    }
+  }
+}

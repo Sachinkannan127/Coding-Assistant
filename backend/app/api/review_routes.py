@@ -1,9 +1,11 @@
 import logging
 from typing import Dict, Any
-from fastapi import APIRouter, HTTPException, status, Response
+from fastapi import APIRouter, HTTPException, status, Response, Depends
 from backend.app.api.schemas import ReviewRequest, ReviewListResponse
 from backend.app.services.review_service import review_service
 from backend.app.services.code_validator import CodeValidationError
+from backend.app.auth import get_current_user, get_optional_user
+
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +134,11 @@ def format_review_markdown(review: dict) -> str:
     summary="Submit Code for AI Review & Refactoring",
     description="Analyzes code, detects bugs & security risks, calculates metrics, generates refactorings, and returns unified review schema."
 )
-async def submit_review(payload: ReviewRequest) -> Dict[str, Any]:
+async def submit_review(
+    payload: ReviewRequest,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+) -> Dict[str, Any]:
+
     """POST /api/review endpoint handler."""
     try:
         review_result = await review_service.run_review(

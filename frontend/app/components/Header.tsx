@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
 
 interface HeaderProps {
   backendStatus?: "connected" | "disconnected" | "checking";
 }
 
 export default function Header({ backendStatus = "checking" }: HeaderProps) {
+  const { isSignedIn, isLoaded } = useUser();
   const [status, setStatus] = useState<"connected" | "disconnected" | "checking">(backendStatus);
 
   const checkBackend = useCallback(async () => {
@@ -68,7 +70,36 @@ export default function Header({ backendStatus = "checking" }: HeaderProps) {
             <span className="spinner" style={{ width: "12px", height: "12px" }}></span> Connecting
           </span>
         )}
+
+        <div style={{ marginLeft: "0.5rem" }}>
+          {isLoaded && !isSignedIn && (
+            <SignInButton mode="modal">
+              <button
+                type="button"
+                style={{
+                  background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+                  border: "none",
+                  color: "#ffffff",
+                  padding: "0.35rem 0.75rem",
+                  borderRadius: "6px",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  cursor: "pointer"
+                }}
+              >
+                Log In
+              </button>
+            </SignInButton>
+          )}
+          {isLoaded && isSignedIn && (
+            <UserButton />
+          )}
+
+
+        </div>
       </div>
     </nav>
   );
 }
+
+

@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException, status
+from typing import Dict, Any
+from fastapi import APIRouter, HTTPException, status, Depends
+from backend.app.auth import get_current_user
 from backend.app.api.schemas import (
     ExecutionRequest,
     ExecutionResponse,
@@ -19,7 +21,11 @@ sandbox_router = APIRouter()
     summary="Execute Code in Isolated Sandbox",
     description="Asynchronously executes a source code snippet in an isolated subprocess environment with timeout bounds."
 )
-async def execute_code_in_sandbox(payload: ExecutionRequest):
+async def execute_code_in_sandbox(
+    payload: ExecutionRequest,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+
     """
     Executes code snippet and returns stdout, stderr, execution time, and exit status.
     """

@@ -34,6 +34,7 @@ import {
 
 interface LandingPageProps {
   onLaunchStudio: () => void;
+  onLaunchCompiler?: () => void;
 }
 
 // Sample scenarios for live interactive demo sandbox
@@ -206,7 +207,7 @@ const AGENT_ROLES = [
   { id: "agent_summarizer", name: "8. Executive Summary Synthesizer", model: "Gemini 2.5 Flash", color: "#ec4899", desc: "Consolidates all 8 agent findings into an executive report with Markdown export capabilities." }
 ];
 
-export default function LandingPage({ onLaunchStudio }: LandingPageProps) {
+export default function LandingPage({ onLaunchStudio, onLaunchCompiler }: LandingPageProps) {
   const [activeScenarioId, setActiveScenarioId] = useState<string>("security");
   const [selectedAgentId, setSelectedAgentId] = useState<string>("agent_security");
   const [copiedCode, setCopiedCode] = useState<boolean>(false);

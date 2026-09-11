@@ -1,6 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
+import { useAuth, useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import LandingHeader from "./components/LandingHeader";
 import LandingPage from "./components/LandingPage";
 import CodeEditor from "./components/CodeEditor";
@@ -10,8 +13,9 @@ import FindingsExplorer from "./components/FindingsExplorer";
 import RefactoringDiff from "./components/RefactoringDiff";
 import CodeSandbox, { ExecutionResult } from "./components/CodeSandbox";
 import CompilerSandboxView from "./components/CompilerSandboxView";
+import McpConnectorsView from "./components/McpConnectorsView";
 import CodeExplanationModal from "./components/CodeExplanationModal";
-import { Sparkles, ArrowLeft, Layout, Code2, Terminal } from "lucide-react";
+import { Sparkles, ArrowLeft, Layout, Code2, Terminal, Network } from "lucide-react";
 
 const DEFAULT_SAMPLE = `def calculate_user_discount(user, cart_items):
     # Calculate initial subtotal
@@ -32,7 +36,30 @@ const DEFAULT_SAMPLE = `def calculate_user_discount(user, cart_items):
 const MAX_CHAR_LIMIT = 50000; // 50 KB ceiling
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<"landing" | "studio" | "compiler">("landing");
+  const { getToken } = useAuth();
+  const { isSignedIn, isLoaded } = useUser();
+  const router = useRouter();
+  const [currentView, setCurrentView] = useState<"landing" | "studio" | "compiler" | "mcp">("landing");
+
+  // Automatically reset to Landing view if user logs out while in studio/compiler/mcp
+  useEffect(() => {
+    if (isLoaded && !isSignedIn && currentView !== "landing") {
+      setCurrentView("landing");
+    }
+  }, [isSignedIn, isLoaded, currentView]);
+
+  const handleSwitchView = (targetView: "landing" | "studio" | "compiler" | "mcp") => {
+    if (targetView === "landing") {
+      setCurrentView("landing");
+      return;
+    }
+    if (!isSignedIn) {
+      router.push("/sign-in");
+      return;
+    }
+    setCurrentView(targetView);
+  };
+
 
   const [code, setCode] = useState<string>(DEFAULT_SAMPLE);
   const [language, setLanguage] = useState<string>("auto");
@@ -64,9 +91,15 @@ export default function Home() {
 
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005";
+      const token = await getToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${baseUrl}/api/sandbox/execute`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           code: codeToRun,
           language: language,
@@ -117,11 +150,15 @@ export default function Home() {
 
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005";
+      const token = await getToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${baseUrl}/api/review`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         signal: controller.signal,
         body: JSON.stringify({
           code: code,
@@ -129,6 +166,7 @@ export default function Home() {
           mode: reviewMode,
         }),
       });
+
 
       clearTimeout(timeoutId);
 
@@ -160,7 +198,7 @@ export default function Home() {
   };
 
   const handleLaunchStudio = () => {
-    setCurrentView("studio");
+    handleSwitchView("studio");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -169,22 +207,29 @@ export default function Home() {
       {/* Global Header */}
       <LandingHeader 
         currentView={currentView} 
-        onSwitchView={setCurrentView} 
+        onSwitchView={handleSwitchView} 
       />
 
       {currentView === "landing" ? (
         /* PREMIUM LANDING PAGE VIEW */
-        <LandingPage onLaunchStudio={handleLaunchStudio} />
+        <LandingPage 
+          onLaunchStudio={handleLaunchStudio} 
+          onLaunchCompiler={() => handleSwitchView("compiler")} 
+        />
       ) : currentView === "compiler" ? (
         /* INTERACTIVE COMPILER SANDBOX WORKSPACE VIEW */
-        <CompilerSandboxView onSwitchView={setCurrentView} />
+        <CompilerSandboxView onSwitchView={handleSwitchView} />
+      ) : currentView === "mcp" ? (
+        /* MODEL CONTEXT PROTOCOL (MCP) CONNECTORS HUB VIEW */
+        <McpConnectorsView onSwitchView={handleSwitchView} />
       ) : (
+
         /* AI STUDIO WORKSPACE VIEW */
         <main className="container fade-in" style={{ paddingTop: "2rem" }}>
           
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.4rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.4rem", flexWrap: "wrap" }}>
                 <button 
                   type="button" 
                   onClick={() => setCurrentView("landing")}
@@ -193,11 +238,29 @@ export default function Home() {
                   <ArrowLeft className="w-4 h-4" />
                   <span>Back to Overview</span>
                 </button>
-                <h1 style={{ fontSize: "1.75rem", fontWeight: 800, letterSpacing: "-0.02em" }}>
-                  AI Code Review & Refactoring Studio Workspace
-                </h1>
+                <button
+                  type="button"
+                  onClick={() => setCurrentView("compiler")}
+                  className="btn-back-pill"
+                  style={{ background: "rgba(168, 85, 247, 0.15)", color: "#c084fc", border: "1px solid rgba(168, 85, 247, 0.3)" }}
+                >
+                  <Terminal className="w-4 h-4" />
+                  <span>Compiler Sandbox</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentView("mcp")}
+                  className="btn-back-pill"
+                  style={{ background: "rgba(56, 189, 248, 0.15)", color: "#38bdf8", border: "1px solid rgba(56, 189, 248, 0.3)" }}
+                >
+                  <Network className="w-4 h-4" />
+                  <span>MCP Connectors Hub</span>
+                </button>
               </div>
-              <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+              <h1 style={{ fontSize: "1.75rem", fontWeight: 800, letterSpacing: "-0.02em" }}>
+                AI Code Review & Refactoring Studio Workspace
+              </h1>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", marginTop: "0.4rem" }}>
                 Powered by LangGraph 8-agent graph orchestration, Google Gemini 2.5, Mistral router, and AST syntax tree validation.
               </p>
             </div>
@@ -242,19 +305,17 @@ export default function Home() {
                 onExplainCode={() => setShowExplanationModal(true)}
               />
 
-              {(showSandbox || sandboxResult || sandboxLoading) && (
-                <CodeSandbox
-                  code={code}
-                  language={language}
-                  onExecute={(stdinData) => handleExecuteSandbox(code, stdinData)}
-                  loading={sandboxLoading}
-                  result={sandboxResult}
-                  onClear={() => {
-                    setSandboxResult(null);
-                    setShowSandbox(false);
-                  }}
-                />
-              )}
+              {/* Permanent Code Sandbox Execution Terminal */}
+              <CodeSandbox
+                code={code}
+                language={language}
+                onExecute={(stdinData) => handleExecuteSandbox(code, stdinData)}
+                loading={sandboxLoading}
+                result={sandboxResult}
+                onClear={() => {
+                  setSandboxResult(null);
+                }}
+              />
             </div>
 
             {/* Right Column: Review Results & Analysis Dashboard */}

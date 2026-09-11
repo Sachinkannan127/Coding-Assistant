@@ -49,6 +49,14 @@ class Settings(BaseSettings):
     ENABLE_RATE_LIMITING: bool = True
     RATE_LIMIT_PER_MINUTE: int = 60
 
+    # Clerk Authentication Config
+    CLERK_SECRET_KEY: str = ""
+    CLERK_PUBLISHABLE_KEY: str = ""
+    CLERK_ISSUER_URL: str = ""
+    CLERK_JWKS_URL: str = ""
+    REQUIRE_AUTH: bool = False
+
+
     model_config = SettingsConfigDict(
         env_file=[
             str(Path(__file__).resolve().parent.parent.parent / ".env"),

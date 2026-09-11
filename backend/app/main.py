@@ -9,6 +9,7 @@ from backend.app.api import review_router, sandbox_router, explain_router
 
 # Configure application-level logging to appear in the terminal
 # force=True ensures our config takes effect even if uvicorn already set up handlers
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(levelname)s:     %(name)s - %(message)s",
@@ -61,10 +62,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from backend.app.api.mcp_routes import router as mcp_router
+from backend.app.api.auth_routes import router as auth_router
+
 # Register API Routers
+app.include_router(auth_router, prefix="/api", tags=["Authentication & User Session"])
 app.include_router(review_router, prefix="/api", tags=["Code Reviews"])
 app.include_router(sandbox_router, prefix="/api", tags=["Code Sandbox"])
 app.include_router(explain_router, prefix="/api", tags=["Code Explanation"])
+app.include_router(mcp_router, prefix="/api", tags=["Model Context Protocol (MCP)"])
+
 
 
 @app.get(
