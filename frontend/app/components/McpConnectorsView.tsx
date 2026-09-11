@@ -107,6 +107,27 @@ export default function McpConnectorsView({ onSwitchView }: McpConnectorsViewPro
       setServers(serversData);
       setTools(toolsData);
 
+      // Fetch stored connector states from MongoDB via API
+      try {
+        const connectorsRes = await fetch(`${baseUrl}/api/connectors`);
+        if (connectorsRes.ok) {
+          const savedConnectors: Array<{ connector_id: string; status: string; access_token?: string }> = await connectorsRes.json();
+          const connMap: Record<string, boolean> = { ...connectedServers };
+          const tokenMap: Record<string, string> = {};
+
+          savedConnectors.forEach((c) => {
+            connMap[c.connector_id] = c.status === "connected";
+            if (c.access_token) {
+              tokenMap[c.connector_id] = c.access_token;
+            }
+          });
+          setConnectedServers(connMap);
+          setServerTokens(tokenMap);
+        }
+      } catch (e) {
+        console.warn("Could not load stored connectors from database:", e);
+      }
+
       if (serversData.length > 0) {
         const firstServer = serversData[0].id;
         setSelectedServerId(firstServer);
@@ -217,7 +238,19 @@ export default function McpConnectorsView({ onSwitchView }: McpConnectorsViewPro
         }
       }
 
-      // Success: Save token & update server connection state
+      // Persist connected state & token to MongoDB via API
+      await fetch(`${baseUrl}/api/connectors/connect`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          connector_id: serverId,
+          name: activeConnectModalServer.name,
+          provider: serverId,
+          access_token: tokenInput.trim()
+        })
+      });
+
+      // Update local state
       setServerTokens((prev) => ({ ...prev, [serverId]: tokenInput.trim() }));
       setConnectedServers((prev) => ({ ...prev, [serverId]: true }));
       setActiveConnectModalServer(null);
@@ -228,7 +261,16 @@ export default function McpConnectorsView({ onSwitchView }: McpConnectorsViewPro
     }
   };
 
-  const handleDisconnectServer = (serverId: string) => {
+  const handleDisconnectServer = async (serverId: string) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005";
+      await fetch(`${baseUrl}/api/connectors/disconnect?connector_id=${serverId}`, {
+        method: "POST"
+      });
+    } catch (e) {
+      console.warn("Could not sync disconnect with MongoDB:", e);
+    }
+
     setConnectedServers((prev) => ({ ...prev, [serverId]: false }));
     setServerTokens((prev) => {
       const updated = { ...prev };
@@ -236,6 +278,7 @@ export default function McpConnectorsView({ onSwitchView }: McpConnectorsViewPro
       return updated;
     });
   };
+
 
   const handleExecuteMcpTool = async () => {
     setExecuting(true);

@@ -34,12 +34,38 @@ class DatabaseManager:
             # Ping database to confirm connection
             await cls.client.admin.command("ping")
             logger.info(f"Successfully connected to MongoDB database: '{settings.MONGODB_DATABASE}'")
+            
+            # Initialize Collection Indexes
+            await cls.create_indexes()
             return "connected"
         except Exception as e:
             logger.error(f"Failed to connect to MongoDB: {e}")
             cls.client = None
             cls.db = None
             raise e
+
+    @classmethod
+    async def create_indexes(cls) -> None:
+        """Ensure required collection indexes exist in MongoDB."""
+        if cls.db is None:
+            return
+        try:
+            logger.info("Initializing collection indexes for users, profiles, and connectors...")
+            # Users collection indexes
+            await cls.db["users"].create_index("user_id", unique=True)
+            await cls.db["users"].create_index("email")
+
+            # Profiles collection indexes
+            await cls.db["profiles"].create_index("user_id", unique=True)
+
+            # Connectors collection indexes
+            await cls.db["connectors"].create_index(
+                [("user_id", 1), ("connector_id", 1)],
+                unique=True
+            )
+            logger.info("Collection indexes created successfully.")
+        except Exception as e:
+            logger.warning(f"Error creating collection indexes: {e}")
 
     @classmethod
     async def close(cls) -> None:
@@ -85,3 +111,4 @@ async def connect_mongodb() -> dict:
         "database": settings.MONGODB_DATABASE,
         "is_alive": await db_manager.ping()
     }
+
