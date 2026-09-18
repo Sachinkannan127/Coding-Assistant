@@ -8,7 +8,7 @@ class UserDocument(BaseModel):
     MongoDB User Document Model representing stored user account entity.
     Collection name: 'users'
     """
-    user_id: str = Field(..., description="Unique Clerk or System User ID (e.g., user_2xxx)")
+    user_id: str = Field(..., description="Unique Clerk or System User ID")
     email: str = Field(..., description="User primary email address")
     first_name: Optional[str] = Field(None, description="User first name")
     last_name: Optional[str] = Field(None, description="User last name")

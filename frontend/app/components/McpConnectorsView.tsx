@@ -168,7 +168,7 @@ export default function McpConnectorsView({ onSwitchView }: McpConnectorsViewPro
       } else if (p.name === "language") {
         sampleObj.language = "python";
       } else {
-        sampleObj[p.name] = p.default !== undefined && p.default !== null ? p.default : "sample_value";
+        sampleObj[p.name] = p.default !== undefined && p.default !== null ? p.default : "";
       }
     });
     setToolArgsText(JSON.stringify(sampleObj, null, 2));
@@ -287,7 +287,8 @@ export default function McpConnectorsView({ onSwitchView }: McpConnectorsViewPro
     let parsedArgs = {};
     try {
       parsedArgs = JSON.parse(toolArgsText);
-    } catch {
+    } catch (err) {
+
       setExecResult({
         status: "error",
         error: "Invalid JSON parameters payload in tool args input."
@@ -712,7 +713,7 @@ export default function McpConnectorsView({ onSwitchView }: McpConnectorsViewPro
                 type="password"
                 value={tokenInput}
                 onChange={(e) => setTokenInput(e.target.value)}
-                placeholder="ghp_... or Bearer token or secret key"
+                placeholder="Enter Access Token or Secret Key"
                 style={{
                   width: "100%",
                   background: "rgba(15, 23, 42, 0.8)",

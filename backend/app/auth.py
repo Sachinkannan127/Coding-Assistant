@@ -105,7 +105,7 @@ async def get_current_user(
             )
         # Development / Non-enforced fallback user context
         return {
-            "user_id": "dev_guest_user",
+            "user_id": settings.GUEST_USER_ID,
             "email": "guest@codepilot.local",
             "first_name": "Guest",
             "last_name": "User",
@@ -149,5 +149,7 @@ async def get_optional_user(
             "is_authenticated": True,
             "claims": claims
         }
-    except Exception:
+    except (HTTPException, jwt.PyJWTError, Exception) as err:
+        logger.debug(f"Optional token validation skipped: {err}")
         return None
+

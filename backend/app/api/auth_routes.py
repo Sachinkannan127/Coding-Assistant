@@ -44,7 +44,7 @@ async def auth_status(user: Dict[str, Any] = Depends(get_optional_user)):
     return {
         "provider": "Clerk",
         "require_auth": settings.REQUIRE_AUTH,
-        "clerk_configured": bool(settings.CLERK_PUBLISHABLE_KEY and "placeholder" not in settings.CLERK_PUBLISHABLE_KEY),
+        "clerk_configured": bool(settings.CLERK_PUBLISHABLE_KEY and settings.CLERK_PUBLISHABLE_KEY.strip().startswith("pk_")),
         "active_user_id": user.get("user_id") if user else None,
         "is_logged_in": user.get("is_authenticated", False) if user else False
     }

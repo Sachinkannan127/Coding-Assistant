@@ -21,9 +21,10 @@ export default function Header({ backendStatus = "checking" }: HeaderProps) {
       } else {
         setStatus("disconnected");
       }
-    } catch {
+    } catch (err) {
       setStatus("disconnected");
     }
+
   }, []);
 
   useEffect(() => {

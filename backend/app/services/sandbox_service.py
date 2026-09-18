@@ -82,131 +82,59 @@ class SandboxService:
     """
 
     @classmethod
+    def _resolve_script_executable(cls, lang: str) -> Optional[Dict[str, Any]]:
+
+        if lang in ["python", "python3", "py", "auto"]:
+            return {"runner": sys.executable, "ext": ".py", "mode": "script", "lang_name": "python"}
+        if lang in ["javascript", "js", "node", "nodejs", "react", "nextjs"]:
+            node_path = shutil.which("node")
+            if node_path:
+                return {"runner": node_path, "ext": ".js", "mode": "script", "lang_name": "javascript"}
+        if lang in ["typescript", "ts"]:
+            ts_node_path = shutil.which("ts-node")
+            node_path = shutil.which("node")
+            if ts_node_path:
+                return {"runner": ts_node_path, "ext": ".ts", "mode": "script", "lang_name": "typescript"}
+            if node_path:
+                return {"runner": node_path, "ext": ".js", "mode": "script", "lang_name": "javascript (node)"}
+        return None
+
+    @classmethod
+    def _resolve_compiled_executable(cls, lang: str) -> Optional[Dict[str, Any]]:
+        if lang in ["c", "cpp", "c++"]:
+            gcc_path = shutil.which("gcc") or shutil.which("g++") or shutil.which("clang")
+            if gcc_path:
+                return {"runner": gcc_path, "ext": ".c" if lang == "c" else ".cpp", "mode": "compile_c", "lang_name": lang}
+        if lang in ["java"]:
+            javac_path = shutil.which("javac")
+            java_path = shutil.which("java")
+            if javac_path and java_path:
+                return {"runner": javac_path, "ext": ".java", "mode": "compile_java", "lang_name": "java"}
+        if lang in ["go", "golang"]:
+            go_path = shutil.which("go")
+            if go_path:
+                return {"runner": go_path, "ext": ".go", "mode": "go_run", "lang_name": "go"}
+        if lang in ["rust", "rs"]:
+            rustc_path = shutil.which("rustc")
+            if rustc_path:
+                return {"runner": rustc_path, "ext": ".rs", "mode": "compile_rust", "lang_name": "rust"}
+        return None
+
+    @classmethod
     def resolve_executable(cls, language: str) -> Dict[str, Any]:
         """
         Maps requested language identifier to runtime command, file extension, and mode.
         """
         lang = (language or "python").lower().strip()
-
-        if lang in ["python", "python3", "py", "auto"]:
-            return {
-                "runner": sys.executable, # Use active python environment
-                "ext": ".py",
-                "mode": "script",
-                "lang_name": "python"
-            }
-        elif lang in ["javascript", "js", "node", "nodejs", "react", "nextjs"]:
-            node_path = shutil.which("node")
-            if node_path:
-                return {
-                    "runner": node_path,
-                    "ext": ".js",
-                    "mode": "script",
-                    "lang_name": "javascript"
-                }
-            else:
-                return {
-                    "runner": sys.executable,
-                    "ext": ".py",
-                    "mode": "script",
-                    "lang_name": "python (fallback)"
-                }
-        elif lang in ["typescript", "ts"]:
-            ts_node_path = shutil.which("ts-node")
-            node_path = shutil.which("node")
-            if ts_node_path:
-                return {
-                    "runner": ts_node_path,
-                    "ext": ".ts",
-                    "mode": "script",
-                    "lang_name": "typescript"
-                }
-            elif node_path:
-                return {
-                    "runner": node_path,
-                    "ext": ".js",
-                    "mode": "script",
-                    "lang_name": "javascript (node)"
-                }
-            else:
-                return {
-                    "runner": sys.executable,
-                    "ext": ".py",
-                    "mode": "script",
-                    "lang_name": "python (fallback)"
-                }
-        elif lang in ["c", "cpp", "c++"]:
-            gcc_path = shutil.which("gcc") or shutil.which("g++") or shutil.which("clang")
-            if gcc_path:
-                return {
-                    "runner": gcc_path,
-                    "ext": ".c" if lang == "c" else ".cpp",
-                    "mode": "compile_c",
-                    "lang_name": lang
-                }
-            else:
-                return {
-                    "runner": sys.executable,
-                    "ext": ".py",
-                    "mode": "script",
-                    "lang_name": "python (fallback)"
-                }
-        elif lang in ["java"]:
-            javac_path = shutil.which("javac")
-            java_path = shutil.which("java")
-            if javac_path and java_path:
-                return {
-                    "runner": javac_path,
-                    "ext": ".java",
-                    "mode": "compile_java",
-                    "lang_name": "java"
-                }
-            else:
-                return {
-                    "runner": sys.executable,
-                    "ext": ".py",
-                    "mode": "script",
-                    "lang_name": "python (fallback)"
-                }
-        elif lang in ["go", "golang"]:
-            go_path = shutil.which("go")
-            if go_path:
-                return {
-                    "runner": go_path,
-                    "ext": ".go",
-                    "mode": "go_run",
-                    "lang_name": "go"
-                }
-            else:
-                return {
-                    "runner": sys.executable,
-                    "ext": ".py",
-                    "mode": "script",
-                    "lang_name": "python (fallback)"
-                }
-        elif lang in ["rust", "rs"]:
-            rustc_path = shutil.which("rustc")
-            if rustc_path:
-                return {
-                    "runner": rustc_path,
-                    "ext": ".rs",
-                    "mode": "compile_rust",
-                    "lang_name": "rust"
-                }
-            else:
-                return {
-                    "runner": sys.executable,
-                    "ext": ".py",
-                    "mode": "script",
-                    "lang_name": "python (fallback)"
-                }
-        else:
-            return {
-                "runner": sys.executable,
-                "ext": ".py",
-                "mode": "script",
-                "lang_name": "python"
-            }
+        res = cls._resolve_script_executable(lang) or cls._resolve_compiled_executable(lang)
+        if res:
+            return res
+        return {
+            "runner": sys.executable,
+            "ext": ".py",
+            "mode": "script",
+            "lang_name": "python (fallback)" if lang not in ["python", "py"] else "python"
+        }
 
     @classmethod
     async def execute_code(
@@ -219,7 +147,6 @@ class SandboxService:
         """
         Executes code snippet asynchronously in an isolated sandbox environment.
         """
-        # Clamp timeout between 1 and 10 seconds
         timeout = max(1, min(int(timeout_seconds or 5), 10))
 
         if not code or not code.strip():
@@ -243,17 +170,19 @@ class SandboxService:
             }
 
         exec_config = cls.resolve_executable(language)
+        return await cls._run_in_temp_dir(code, stdin_data, timeout, exec_config)
+
+    @classmethod
+    async def _run_in_temp_dir(cls, code: str, stdin_data: str, timeout: int, exec_config: Dict[str, Any]) -> Dict[str, Any]:
         runner = exec_config["runner"]
         ext = exec_config["ext"]
         mode = exec_config["mode"]
         lang_name = exec_config["lang_name"]
 
-        # Create isolated temporary workspace
         with tempfile.TemporaryDirectory(prefix="codepilot_sandbox_") as tmp_dir:
             filename = "Main.java" if mode == "compile_java" else f"main{ext}"
             file_path = os.path.join(tmp_dir, filename)
 
-            # If code is Python and contains function definitions without print statements, append auto-driver invocation
             code_to_run = code
             if ext == ".py" and "print(" not in code and "print (" not in code:
                 code_to_run += """
@@ -267,78 +196,81 @@ if __name__ == '__main__':
                 import inspect
                 sig = inspect.signature(func)
                 params = sig.parameters
-                if len(params) == 0:
-                    val = func()
-                    print(f"Executed {name}() ->", val)
-                elif len(params) == 2:
-                    sample_user = {"role": "VIP", "username": "admin", "config": "{}"}
-                    sample_cart = [{"price": 100, "quantity": 2}, {"price": 50, "quantity": 1}]
-                    val = func(sample_user, sample_cart)
-                    print(f"Executed {name}(user, cart_items) ->", val)
+                args = []
+                for p in params.values():
+                    if p.default != inspect.Parameter.empty:
+                        args.append(p.default)
+                    elif p.annotation == int:
+                        args.append(1)
+                    elif p.annotation == str:
+                        args.append("input_str")
+                    else:
+                        args.append(None)
+                val = func(*args) if args else func()
+                print(f"Executed {name}() ->", val)
             except Exception as _e:
                 pass
 """
 
-            # Write code payload to temporary file
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(code_to_run)
 
-            if mode == "compile_c":
-                bin_path = os.path.join(tmp_dir, "main.exe" if sys.platform == "win32" else "main")
-                compile_cmd = [runner, file_path, "-o", bin_path]
-                compile_res = await asyncio.to_thread(_run_subprocess_sync, compile_cmd, "", tmp_dir, timeout)
-                if compile_res["exit_code"] != 0:
-                    return {
-                        "stdout": compile_res["stdout"],
-                        "stderr": f"Compilation Error:\n{compile_res['stderr']}",
-                        "exit_code": compile_res["exit_code"],
-                        "status": "error",
-                        "execution_time_ms": compile_res["execution_time_ms"],
-                        "language_used": lang_name
-                    }
-                cmd = [bin_path]
-            elif mode == "compile_rust":
-                bin_path = os.path.join(tmp_dir, "main.exe" if sys.platform == "win32" else "main")
-                compile_cmd = [runner, file_path, "-o", bin_path]
-                compile_res = await asyncio.to_thread(_run_subprocess_sync, compile_cmd, "", tmp_dir, timeout)
-                if compile_res["exit_code"] != 0:
-                    return {
-                        "stdout": compile_res["stdout"],
-                        "stderr": f"Rust Compilation Error:\n{compile_res['stderr']}",
-                        "exit_code": compile_res["exit_code"],
-                        "status": "error",
-                        "execution_time_ms": compile_res["execution_time_ms"],
-                        "language_used": lang_name
-                    }
-                cmd = [bin_path]
-            elif mode == "compile_java":
-                compile_cmd = [runner, file_path]
-                compile_res = await asyncio.to_thread(_run_subprocess_sync, compile_cmd, "", tmp_dir, timeout)
-                if compile_res["exit_code"] != 0:
-                    return {
-                        "stdout": compile_res["stdout"],
-                        "stderr": f"Java Compilation Error:\n{compile_res['stderr']}",
-                        "exit_code": compile_res["exit_code"],
-                        "status": "error",
-                        "execution_time_ms": compile_res["execution_time_ms"],
-                        "language_used": lang_name
-                    }
-                java_bin = shutil.which("java") or "java"
-                cmd = [java_bin, "-cp", tmp_dir, "Main"]
-            elif mode == "go_run":
-                cmd = [runner, "run", file_path]
-            elif ext == ".py":
-                cmd = [runner, "-u", file_path]
-            else:
-                cmd = [runner, file_path]
+            return await cls._dispatch_sandbox_mode(mode, runner, file_path, stdin_data, tmp_dir, timeout, lang_name)
 
-            exec_res = await asyncio.to_thread(_run_subprocess_sync, cmd, stdin_data, tmp_dir, timeout)
-            exec_res["language_used"] = lang_name
+    @classmethod
+    async def _dispatch_sandbox_mode(
+        cls,
+        mode: str,
+        runner: str,
+        file_path: str,
+        stdin_data: str,
+        tmp_dir: str,
+        timeout: int,
+        lang_name: str
+    ) -> Dict[str, Any]:
+        if mode in ["compile_c", "compile_rust"]:
+            bin_path = os.path.join(tmp_dir, "main.exe" if sys.platform == "win32" else "main")
+            compile_cmd = [runner, file_path, "-o", bin_path]
+            compile_res = await asyncio.to_thread(_run_subprocess_sync, compile_cmd, "", tmp_dir, timeout)
+            if compile_res["exit_code"] != 0:
+                return {
+                    "stdout": compile_res["stdout"],
+                    "stderr": f"Compilation Error:\n{compile_res['stderr']}",
+                    "exit_code": compile_res["exit_code"],
+                    "status": "error",
+                    "execution_time_ms": compile_res["execution_time_ms"],
+                    "language_used": lang_name
+                }
+            cmd = [bin_path]
+        elif mode == "compile_java":
+            compile_cmd = [runner, file_path]
+            compile_res = await asyncio.to_thread(_run_subprocess_sync, compile_cmd, "", tmp_dir, timeout)
+            if compile_res["exit_code"] != 0:
+                return {
+                    "stdout": compile_res["stdout"],
+                    "stderr": f"Java Compilation Error:\n{compile_res['stderr']}",
+                    "exit_code": compile_res["exit_code"],
+                    "status": "error",
+                    "execution_time_ms": compile_res["execution_time_ms"],
+                    "language_used": lang_name
+                }
+            java_bin = shutil.which("java") or "java"
+            cmd = [java_bin, "-cp", tmp_dir, "Main"]
+        elif mode == "go_run":
+            cmd = [runner, "run", file_path]
+        elif file_path.endswith(".py"):
+            cmd = [runner, "-u", file_path]
+        else:
+            cmd = [runner, file_path]
 
-            if exec_res["exit_code"] == 0 and not exec_res["stdout"].strip() and not exec_res["stderr"].strip():
-                exec_res["stdout"] = "✓ Code executed cleanly (Exit Code 0).\n(Note: Code produced no output. Add print() statements or return values to inspect output in the terminal.)"
+        exec_res = await asyncio.to_thread(_run_subprocess_sync, cmd, stdin_data, tmp_dir, timeout)
+        exec_res["language_used"] = lang_name
 
-            return exec_res
+        if exec_res["exit_code"] == 0 and not exec_res["stdout"].strip() and not exec_res["stderr"].strip():
+            exec_res["stdout"] = "✓ Code executed cleanly (Exit Code 0).\n(Note: Code produced no output. Add print() statements or return values to inspect output in the terminal.)"
+
+        return exec_res
+
 
     @classmethod
     async def run_test_cases(

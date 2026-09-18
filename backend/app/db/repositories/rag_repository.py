@@ -60,8 +60,10 @@ class RAGRepository:
             async for doc in cursor:
                 doc.pop("_id", None)
                 documents.append(RAGDocument(**doc))
-        except Exception:
+        except Exception as err:
             # Vector index might not be created on local MongoDB or Atlas cluster
-            pass
+            import logging
+            logging.getLogger(__name__).debug(f"Vector search bypassed or index missing: {err}")
+
         return documents
 

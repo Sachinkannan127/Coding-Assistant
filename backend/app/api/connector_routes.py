@@ -15,7 +15,7 @@ router = APIRouter()
 @router.get("/connectors", status_code=status.HTTP_200_OK, response_model=List[Dict[str, Any]])
 async def list_connectors(current_user: Dict[str, Any] = Depends(get_current_user)):
     """Fetch all saved MCP connectors for current user from MongoDB 'connectors' collection."""
-    user_id = current_user.get("user_id", "dev_guest_user")
+    user_id = current_user["user_id"]
     connector_repo = ConnectorRepository()
     connectors = await connector_repo.get_user_connectors(user_id)
     return [c.model_dump() for c in connectors]
@@ -29,7 +29,7 @@ async def connect_connector(
     """
     Save or update MCP connector status to 'connected' and store access token in MongoDB 'connectors' collection.
     """
-    user_id = current_user.get("user_id", "dev_guest_user")
+    user_id = current_user["user_id"]
     token = body.access_token.strip()
 
     if not token or len(token) < 4:
@@ -70,7 +70,7 @@ async def disconnect_connector(
     current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Update MCP connector status to 'disconnected' in MongoDB 'connectors' collection."""
-    user_id = current_user.get("user_id", "dev_guest_user")
+    user_id = current_user["user_id"]
     connector_repo = ConnectorRepository()
     
     updated = await connector_repo.update_connector_status(
@@ -98,7 +98,7 @@ async def delete_connector(
     current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Delete MCP connector document from MongoDB 'connectors' collection."""
-    user_id = current_user.get("user_id", "dev_guest_user")
+    user_id = current_user["user_id"]
     connector_repo = ConnectorRepository()
     deleted = await connector_repo.delete_connector(user_id, connector_id)
 

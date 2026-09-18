@@ -25,9 +25,10 @@ export default function LandingHeader({ currentView, onSwitchView }: LandingHead
       } else {
         setStatus("disconnected");
       }
-    } catch {
+    } catch (err) {
       setStatus("disconnected");
     }
+
   }, []);
 
   useEffect(() => {

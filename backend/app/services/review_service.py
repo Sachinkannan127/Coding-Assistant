@@ -45,15 +45,12 @@ class ReviewService:
         """
         start_time = time.perf_counter()
         rev_id = review_id or f"rev_{uuid.uuid4().hex[:12]}"
-        clean_mode = mode.lower().strip() if mode else "quick"
-
-        if clean_mode not in ["quick", "deep"]:
-            clean_mode = "quick"
+        clean_mode = mode.lower().strip() if mode and mode.lower().strip() in ["quick", "deep"] else "quick"
 
         # 1. Validate & Normalize Code Input
         norm_result = validate_and_normalize_code(code=code, language=language)
 
-        # 2. Invoke LangGraph Multi-Agent State Graph Workflow with Tracing Config
+        # 2. Invoke LangGraph Multi-Agent State Graph Workflow
         run_config = tracing_service.get_run_config(review_id=rev_id, mode=clean_mode, language=norm_result.language)
         logger.info(f"ReviewService executing '{clean_mode}' review workflow for {rev_id}...")
 
@@ -66,7 +63,21 @@ class ReviewService:
 
         elapsed_ms = int((time.perf_counter() - start_time) * 1000)
 
-        # 3. Format Response Objects
+        # 3. Format Response Object and Persist
+        response_dict, persistence_kwargs = self._format_review_payload(
+            rev_id=rev_id,
+            clean_mode=clean_mode,
+            norm_result=norm_result,
+            graph_output=graph_output,
+            elapsed_ms=elapsed_ms
+        )
+
+        await self._persist_review_doc(rev_id=rev_id, clean_mode=clean_mode, norm_result=norm_result, response_dict=response_dict, **persistence_kwargs)
+
+        return response_dict
+
+    def _format_review_payload(self, rev_id: str, clean_mode: str, norm_result: Any, graph_output: Dict[str, Any], elapsed_ms: int):
+        """Formats graph output into review response dictionary and persistence kwargs."""
         summary_data = {
             "overview": graph_output.get("overview", "Code Review Summary"),
             "verdict": graph_output.get("verdict", "clean"),
@@ -82,7 +93,6 @@ class ReviewService:
 
         refactored_code = graph_output.get("refactored_code", norm_result.normalized_code)
         has_refactoring = bool(refactored_code and refactored_code.strip() != norm_result.normalized_code.strip())
-
         raw_val_status = graph_output.get("validation_status", "passed")
         valid_statuses = ["passed", "retried_passed", "fallback_original"]
         clean_val_status = raw_val_status if raw_val_status in valid_statuses else "passed"
@@ -103,14 +113,12 @@ class ReviewService:
             "rag_sources": ["OWASP Top 10 API Security", "Clean Code Guidelines"] if clean_mode == "deep" else []
         }
 
-        # Convert raw findings dicts to Finding schema objects
         findings_list: List[Finding] = []
         for idx, f in enumerate(graph_output.get("findings", [])):
             if isinstance(f, dict):
                 f_copy = f.copy()
                 if "id" not in f_copy or not f_copy["id"]:
                     f_copy["id"] = f"find-{idx+1:03d}"
-                # Ensure literal validation bounds
                 if f_copy.get("category") not in ["bug", "security", "quality", "complexity"]:
                     f_copy["category"] = "bug"
                 if f_copy.get("severity") not in ["critical", "high", "medium", "low", "info"]:
@@ -143,7 +151,29 @@ class ReviewService:
             "execution_metadata": execution_metadata
         }
 
-        # 4. Attempt MongoDB Persistence (with Graceful Failure)
+        persistence_kwargs = {
+            "summary_data": summary_data,
+            "metrics_data": metrics_data,
+            "findings_list": findings_list,
+            "refactoring_data": refactoring_data,
+            "execution_metadata": execution_metadata
+        }
+
+        return response_dict, persistence_kwargs
+
+    async def _persist_review_doc(
+        self,
+        rev_id: str,
+        clean_mode: str,
+        norm_result: Any,
+        response_dict: Dict[str, Any],
+        summary_data: Dict[str, Any],
+        metrics_data: Dict[str, Any],
+        findings_list: List[Finding],
+        refactoring_data: Dict[str, Any],
+        execution_metadata: Dict[str, Any]
+    ):
+        """Attempts MongoDB persistence with graceful fallback."""
         try:
             doc = CodeReviewDocument(
                 review_id=rev_id,
@@ -163,6 +193,7 @@ class ReviewService:
             logger.info(f"Successfully persisted review {rev_id} to MongoDB Atlas.")
         except Exception as db_err:
             logger.warning(f"MongoDB persistence unavailable ({db_err}). Returning response without saving.")
+
 
         return response_dict
 

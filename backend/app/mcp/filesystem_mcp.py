@@ -157,8 +157,9 @@ class FilesystemMcpServer:
                                 })
                                 if len(matches) >= 50:
                                     break
-                except Exception:
+                except (OSError, IOError, UnicodeDecodeError):
                     continue
+
                 if len(matches) >= 50:
                     break
 

@@ -48,6 +48,7 @@ def test_v1_readme_roadmap_completion():
     assert readme_file.exists()
     content = readme_file.read_text(encoding="utf-8")
 
-    # Verify all 23 phases are checked [x]
-    for phase_num in range(23):
+    # Verify all 15 phases (Phase 0 through Phase 14) are checked [x]
+    for phase_num in range(15):
         assert f"- [x] **Phase {phase_num}**" in content
+

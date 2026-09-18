@@ -55,6 +55,7 @@ class Settings(BaseSettings):
     CLERK_ISSUER_URL: str = ""
     CLERK_JWKS_URL: str = ""
     REQUIRE_AUTH: bool = False
+    GUEST_USER_ID: str = "guest_user"
 
 
     model_config = SettingsConfigDict(

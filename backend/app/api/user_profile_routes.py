@@ -23,7 +23,7 @@ async def sync_user(
     """
     Sync current authenticated user data into MongoDB 'users' collection and initialize default 'profiles' document.
     """
-    user_id = current_user.get("user_id", "dev_guest_user")
+    user_id = current_user["user_id"]
     email = (body and body.email) or current_user.get("email") or "guest@codepilot.local"
     first_name = (body and body.first_name) or current_user.get("first_name")
     last_name = (body and body.last_name) or current_user.get("last_name")
@@ -60,7 +60,7 @@ async def sync_user(
 @router.get("/users/me", status_code=status.HTTP_200_OK)
 async def get_my_user(current_user: Dict[str, Any] = Depends(get_current_user)):
     """Fetch current user record from MongoDB 'users' collection."""
-    user_id = current_user.get("user_id", "dev_guest_user")
+    user_id = current_user["user_id"]
     user_repo = UserRepository()
     user_doc = await user_repo.get_user_by_id(user_id)
     if not user_doc:
@@ -80,7 +80,7 @@ async def get_my_user(current_user: Dict[str, Any] = Depends(get_current_user)):
 @router.get("/profiles/me", status_code=status.HTTP_200_OK)
 async def get_my_profile(current_user: Dict[str, Any] = Depends(get_current_user)):
     """Fetch current user profile document from MongoDB 'profiles' collection."""
-    user_id = current_user.get("user_id", "dev_guest_user")
+    user_id = current_user["user_id"]
     profile_repo = ProfileRepository()
     profile_doc = await profile_repo.get_profile_by_user_id(user_id)
     if not profile_doc:
@@ -96,7 +96,7 @@ async def update_my_profile(
     current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Update profile fields in MongoDB 'profiles' collection for current user."""
-    user_id = current_user.get("user_id", "dev_guest_user")
+    user_id = current_user["user_id"]
     profile_repo = ProfileRepository()
 
     existing_profile = await profile_repo.get_profile_by_user_id(user_id)

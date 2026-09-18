@@ -66,6 +66,8 @@ from backend.app.api.mcp_routes import router as mcp_router
 from backend.app.api.auth_routes import router as auth_router
 from backend.app.api.user_profile_routes import router as user_profile_router
 from backend.app.api.connector_routes import router as connector_router
+from backend.app.api.eval_routes import router as eval_router
+
 
 # Register API Routers
 app.include_router(auth_router, prefix="/api", tags=["Authentication & User Session"])
@@ -75,6 +77,8 @@ app.include_router(review_router, prefix="/api", tags=["Code Reviews"])
 app.include_router(sandbox_router, prefix="/api", tags=["Code Sandbox"])
 app.include_router(explain_router, prefix="/api", tags=["Code Explanation"])
 app.include_router(mcp_router, prefix="/api", tags=["Model Context Protocol (MCP)"])
+app.include_router(eval_router, prefix="/api", tags=["AI Quality Evaluation Benchmark"])
+
 
 
 

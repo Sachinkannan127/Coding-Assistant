@@ -144,7 +144,9 @@ export async function copyMarkdownToClipboard(content: string): Promise<boolean>
   try {
     await navigator.clipboard.writeText(content);
     return true;
-  } catch {
+  } catch (err) {
+    console.warn("Clipboard write failed:", err);
     return false;
   }
+
 }

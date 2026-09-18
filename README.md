@@ -192,26 +192,23 @@ HOST="0.0.0.0"
 PORT=8005
 CORS_ORIGINS="http://localhost:3000,http://127.0.0.1:3000"
 
+# Copy the provided environment configuration template:
+cp .env.example .env
+
 # LLM Providers
-GEMINI_API_KEY="your_google_gemini_api_key"
-MISTRAL_API_KEY="your_mistral_api_key"
+GEMINI_API_KEY=""
+MISTRAL_API_KEY=""
 
 # Database Config
-MONGODB_URI="your_mongodb_connection_string"
+MONGODB_URI="mongodb://localhost:27017"
 MONGODB_DATABASE="code_pilot"
 
-# Clerk Authentication Config
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
-CLERK_SECRET_KEY="sk_test_..."
-NEXT_PUBLIC_CLERK_SIGN_IN_URL="/sign-in"
-NEXT_PUBLIC_CLERK_SIGN_UP_URL="/sign-up"
-CLERK_ISSUER_URL="https://your-clerk-domain.clerk.accounts.dev"
-
-# LangSmith Observability (Optional)
-LANGCHAIN_TRACING_V2=true
-LANGCHAIN_API_KEY="lsv2_pt_..."
-LANGCHAIN_PROJECT="code-review-platform"
+# Clerk Authentication Config (Optional in dev)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=""
+CLERK_SECRET_KEY=""
+CLERK_ISSUER_URL=""
 ```
+
 
 ### 3. Backend Setup (FastAPI)
 
