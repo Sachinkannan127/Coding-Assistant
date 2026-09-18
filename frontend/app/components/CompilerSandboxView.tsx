@@ -123,7 +123,7 @@ export default function CompilerSandboxView({ onSwitchView }: CompilerSandboxVie
 
     setLoading(true);
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005";
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005").replace(/\/+$/, "");
       const response = await fetch(`${baseUrl}/api/sandbox/execute`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

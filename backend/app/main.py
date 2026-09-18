@@ -48,10 +48,20 @@ app = FastAPI(
 )
 
 from backend.app.middleware import SecurityHeadersMiddleware, RateLimiterMiddleware
+import re
+from starlette.requests import Request
+
+@app.middleware("http")
+async def normalize_double_slash_middleware(request: Request, call_next):
+    # Normalize double slashes in URL path (e.g. //health -> /health)
+    if "//" in request.scope.get("path", ""):
+        request.scope["path"] = re.sub(r"/+", "/", request.scope["path"])
+    return await call_next(request)
 
 # Security Headers & Rate Limiter Middleware
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RateLimiterMiddleware, rate_limit_per_minute=settings.RATE_LIMIT_PER_MINUTE)
+
 
 # CORS Middleware setup supporting local dev, Vercel deployments, and dynamic origins
 cors_origins = settings.cors_origins_list

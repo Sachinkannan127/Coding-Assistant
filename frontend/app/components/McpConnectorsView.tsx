@@ -91,7 +91,7 @@ export default function McpConnectorsView({ onSwitchView }: McpConnectorsViewPro
     setLoading(true);
     setError(null);
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005";
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005").replace(/\/+$/, "");
       const [serversRes, toolsRes] = await Promise.all([
         fetch(`${baseUrl}/api/v1/mcp/servers`),
         fetch(`${baseUrl}/api/v1/mcp/tools`)
@@ -210,7 +210,7 @@ export default function McpConnectorsView({ onSwitchView }: McpConnectorsViewPro
     setModalError(null);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005";
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005").replace(/\/+$/, "");
 
       // If verifying OAuth or GitHub connector, call verify_oauth_token tool endpoint
       if (serverId === "oauth" || serverId === "github") {
@@ -263,7 +263,7 @@ export default function McpConnectorsView({ onSwitchView }: McpConnectorsViewPro
 
   const handleDisconnectServer = async (serverId: string) => {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005";
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005").replace(/\/+$/, "");
       await fetch(`${baseUrl}/api/connectors/disconnect?connector_id=${serverId}`, {
         method: "POST"
       });
@@ -298,7 +298,7 @@ export default function McpConnectorsView({ onSwitchView }: McpConnectorsViewPro
     }
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005";
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005").replace(/\/+$/, "");
       const response = await fetch(`${baseUrl}/api/v1/mcp/call`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

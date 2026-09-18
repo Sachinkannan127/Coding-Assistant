@@ -83,7 +83,7 @@ export default function TestCasesModal({
     setGeneratingAi(true);
     setError(null);
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005";
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005").replace(/\/+$/, "");
       const res = await fetch(`${baseUrl}/api/sandbox/generate-testcases`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -119,7 +119,7 @@ export default function TestCasesModal({
     setLoading(true);
     setError(null);
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005";
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005").replace(/\/+$/, "");
       const res = await fetch(`${baseUrl}/api/sandbox/testcases`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

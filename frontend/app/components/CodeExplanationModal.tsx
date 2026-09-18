@@ -42,7 +42,7 @@ export default function CodeExplanationModal({
     setLoading(true);
     setError(null);
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005";
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005").replace(/\/+$/, "");
       const res = await fetch(`${baseUrl}/api/explain`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

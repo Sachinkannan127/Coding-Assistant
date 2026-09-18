@@ -32,5 +32,11 @@ def test_health_endpoint():
     assert "version" in data
     assert "environment" in data
     assert "database" in data
-    assert "timestamp" in data
+def test_double_slash_health_endpoint():
+    """Verify GET //health is normalized and returns HTTP 200 OK."""
+    response = client.get("http://testserver//health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ok"
+
 

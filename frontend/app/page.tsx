@@ -90,7 +90,7 @@ export default function Home() {
     setShowSandbox(true);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005";
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005").replace(/\/+$/, "");
       const token = await getToken();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) {
@@ -149,7 +149,7 @@ export default function Home() {
     const timeoutId = setTimeout(() => controller.abort(), 45000);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005";
+      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8005").replace(/\/+$/, "");
       const token = await getToken();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) {
