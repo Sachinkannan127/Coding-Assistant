@@ -49,6 +49,12 @@ class Settings(BaseSettings):
     ENABLE_RATE_LIMITING: bool = True
     RATE_LIMIT_PER_MINUTE: int = 60
 
+    # JWT Authentication & Refresh Token Config
+    JWT_SECRET_KEY: str = "codepilot_jwt_secret_key_change_in_production_123456"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
     # Clerk Authentication Config
     CLERK_SECRET_KEY: str = ""
     CLERK_PUBLISHABLE_KEY: str = ""
@@ -56,6 +62,7 @@ class Settings(BaseSettings):
     CLERK_JWKS_URL: str = ""
     REQUIRE_AUTH: bool = False
     GUEST_USER_ID: str = "guest_user"
+
 
 
     model_config = SettingsConfigDict(
