@@ -53,24 +53,20 @@ from backend.app.middleware import SecurityHeadersMiddleware, RateLimiterMiddlew
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RateLimiterMiddleware, rate_limit_per_minute=settings.RATE_LIMIT_PER_MINUTE)
 
-# CORS Middleware
+# CORS Middleware setup supporting local dev, Vercel deployments, and dynamic origins
 cors_origins = settings.cors_origins_list
-if "*" in cors_origins:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=False,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-else:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=cors_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+is_wildcard = "*" in cors_origins or not cors_origins
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[] if is_wildcard else cors_origins,
+    allow_origin_regex=r"^https?://.*$",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
+
 
 
 from backend.app.api.mcp_routes import router as mcp_router
