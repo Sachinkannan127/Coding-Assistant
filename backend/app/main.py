@@ -54,13 +54,24 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RateLimiterMiddleware, rate_limit_per_minute=settings.RATE_LIMIT_PER_MINUTE)
 
 # CORS Middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+cors_origins = settings.cors_origins_list
+if "*" in cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
 
 from backend.app.api.mcp_routes import router as mcp_router
 from backend.app.api.auth_routes import router as auth_router

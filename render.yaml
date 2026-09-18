@@ -1,0 +1,32 @@
+# Render Infrastructure-as-Code (Blueprint Specification)
+# Deploy FastAPI Backend Service on Render (https://render.com)
+
+services:
+  - type: web
+    name: codepilot-backend
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: HOST
+        value: "0.0.0.0"
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DATABASE
+        value: code_pilot
+      - key: REQUIRE_AUTH
+        value: "false"
