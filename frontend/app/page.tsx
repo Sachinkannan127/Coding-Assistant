@@ -245,7 +245,7 @@ export default function Home() {
                   style={{ background: "rgba(168, 85, 247, 0.15)", color: "#c084fc", border: "1px solid rgba(168, 85, 247, 0.3)" }}
                 >
                   <Terminal className="w-4 h-4" />
-                  <span>Compiler Sandbox</span>
+                  <span>Compiler</span>
                 </button>
                 <button
                   type="button"

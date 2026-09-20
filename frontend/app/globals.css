@@ -335,6 +335,126 @@ body {
   color: #475569;
 }
 
+/* ==========================================================================
+   Structured Online Compiler Editor Styles
+   ========================================================================== */
+.structured-editor-container {
+  display: flex;
+  flex-direction: column;
+  background: rgba(10, 15, 26, 0.95);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.structured-editor-container:focus-within {
+  border-color: rgba(168, 85, 247, 0.6);
+  box-shadow: 0 12px 40px rgba(168, 85, 247, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.structured-editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.85rem;
+  background: rgba(15, 23, 42, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.structured-editor-body {
+  display: flex;
+  flex: 1;
+  position: relative;
+  background: #080c14;
+  overflow: hidden;
+}
+
+.structured-line-numbers {
+  padding: 0.85rem 0.6rem;
+  background: rgba(6, 10, 18, 0.9);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  color: #475569;
+  font-family: var(--font-mono, monospace);
+  line-height: 1.6;
+  text-align: right;
+  user-select: none;
+  min-width: 48px;
+  overflow-y: hidden;
+  pointer-events: none;
+}
+
+.line-num-item {
+  transition: color 0.15s ease, background-color 0.15s ease;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.active-line-num {
+  color: #c084fc !important;
+  font-weight: 700;
+  background: rgba(168, 85, 247, 0.15);
+}
+
+.structured-code-textarea {
+  flex: 1;
+  background: transparent;
+  color: #e2e8f0;
+  font-family: 'JetBrains Mono', 'Fira Code', var(--font-mono, monospace);
+  line-height: 1.6;
+  padding: 0.85rem 1rem;
+  border: none;
+  outline: none;
+  resize: none;
+  white-space: pre;
+  overflow: auto;
+  tab-size: 2;
+  caret-color: #a855f7;
+}
+
+.structured-code-textarea::selection {
+  background: rgba(168, 85, 247, 0.35);
+  color: #ffffff;
+}
+
+.structured-code-textarea::placeholder {
+  color: #334155;
+  font-style: italic;
+}
+
+/* Font Size Modifiers */
+.editor-text-sm {
+  font-size: 0.8125rem !important; /* 13px */
+  line-height: 1.55 !important;
+}
+
+.editor-text-md {
+  font-size: 0.90625rem !important; /* 14.5px */
+  line-height: 1.6 !important;
+}
+
+.editor-text-lg {
+  font-size: 1.0625rem !important; /* 17px */
+  line-height: 1.65 !important;
+}
+
+.structured-editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.85rem;
+  background: rgba(6, 10, 18, 0.85);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+
 /* Buttons */
 .btn {
   display: inline-flex;

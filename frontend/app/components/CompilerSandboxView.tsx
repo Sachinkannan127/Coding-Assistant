@@ -5,6 +5,7 @@ import { Terminal, Play, RefreshCw, X, Copy, Check, Download, CornerDownLeft, Sp
 import { ExecutionResult } from "./CodeSandbox";
 import CodeExplanationModal from "./CodeExplanationModal";
 import TestCasesModal from "./TestCasesModal";
+import StructuredCodeEditor from "./StructuredCodeEditor";
 
 interface CompilerSandboxViewProps {
   onSwitchView: (view: "landing" | "studio" | "compiler") => void;
@@ -194,7 +195,7 @@ export default function CompilerSandboxView({ onSwitchView }: CompilerSandboxVie
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.4rem" }}>
             <span className="badge badge-purple" style={{ fontSize: "0.8rem", padding: "0.3rem 0.75rem" }}>
-              <Terminal className="w-3.5 h-3.5 mr-1 inline text-purple-400" /> Interactive Compiler Sandbox
+              <Terminal className="w-3.5 h-3.5 mr-1 inline text-purple-400" /> Interactive Compiler
             </span>
             <h1 style={{ fontSize: "1.75rem", fontWeight: 800, letterSpacing: "-0.02em" }}>
               Online Code Execution Playground
@@ -223,7 +224,7 @@ export default function CompilerSandboxView({ onSwitchView }: CompilerSandboxVie
         {/* Left Column: Code Editor */}
         <div className="card" style={{ display: "flex", flexDirection: "column" }}>
           {/* Header Controls */}
-          <div className="card-header" style={{ flexWrap: "wrap", gap: "0.75rem" }}>
+          <div className="card-header" style={{ flexWrap: "wrap", gap: "0.75rem", marginBottom: "0.75rem" }}>
             <div className="card-title">
               <Code className="w-5 h-5 text-indigo-400 mr-1.5" /> Source Code Editor
             </div>
@@ -240,60 +241,19 @@ export default function CompilerSandboxView({ onSwitchView }: CompilerSandboxVie
                   <option key={i} value={i}>{p.name}</option>
                 ))}
               </select>
-
-              <select
-                className="select-input"
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                style={{ fontSize: "0.78rem", padding: "0.35rem 0.65rem" }}
-              >
-                <option value="python">Python 3</option>
-                <option value="javascript">JavaScript (Node)</option>
-                <option value="typescript">TypeScript</option>
-                <option value="c">C</option>
-                <option value="cpp">C++</option>
-                <option value="java">Java</option>
-                <option value="go">Go</option>
-                <option value="rust">Rust</option>
-              </select>
             </div>
           </div>
 
-          {/* Editor Body */}
-          <div className="editor-container" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <div className="editor-toolbar">
-              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", fontSize: "0.75rem", color: "var(--text-muted)" }}>
-                <span style={{ color: "var(--accent-cyan)", fontWeight: 600 }}>{language.toUpperCase()}</span>
-                <span>•</span>
-                <span>{lineCount} lines</span>
-                <span>•</span>
-                <span>{code.length.toLocaleString()} chars</span>
-              </div>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => setCode("")}
-                style={{ fontSize: "0.72rem", padding: "0.2rem 0.5rem" }}
-              >
-                Clear
-              </button>
-            </div>
-
-            <div className="editor-body" style={{ flex: 1, minHeight: "380px" }}>
-              <div className="line-numbers">
-                {lineNumbers.map((num) => (
-                  <div key={num}>{num}</div>
-                ))}
-              </div>
-              <textarea
-                className="code-textarea"
-                placeholder="// Write or paste code snippet here..."
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                spellCheck={false}
-                style={{ minHeight: "380px", height: "100%" }}
-              />
-            </div>
+          {/* Structured IDE Code Editor */}
+          <div style={{ flex: 1 }}>
+            <StructuredCodeEditor
+              code={code}
+              setCode={setCode}
+              language={language}
+              setLanguage={setLanguage}
+              minHeight="400px"
+              placeholder="// Write or paste your source code here..."
+            />
           </div>
 
           {/* Footer Actions */}

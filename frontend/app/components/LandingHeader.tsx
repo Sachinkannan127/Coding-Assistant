@@ -110,7 +110,7 @@ export default function LandingHeader({ currentView, onSwitchView }: LandingHead
                   whiteSpace: "nowrap"
                 }}
               >
-                <Terminal className="w-4 h-4 mr-1 text-purple-400" /> Compiler Sandbox
+                <Terminal className="w-4 h-4 mr-1 text-purple-400" /> Compiler
               </button>
               <button
                 type="button"

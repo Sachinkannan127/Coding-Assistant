@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+import StructuredCodeEditor from "./StructuredCodeEditor";
 
 interface CodeEditorProps {
   code: string;
@@ -211,47 +212,22 @@ export default function CodeEditor({
         </div>
       </div>
 
-      {/* Editor Body with Line Numbers */}
-      <div className="editor-container">
-        <div className="editor-toolbar">
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", fontSize: "0.75rem", color: "var(--text-muted)" }}>
-            <span style={{ color: "var(--accent-cyan)", fontWeight: 600 }}>{language.toUpperCase()}</span>
-            <span>•</span>
-            <span>{lineCount} lines</span>
-            <span>•</span>
-            <span style={{ color: isExceedingLimit ? "var(--accent-rose)" : isApproachingLimit ? "var(--accent-amber)" : "var(--text-muted)" }}>
-              {code.length.toLocaleString()} / 50,000 chars
+      {/* Structured IDE Code Editor */}
+      <StructuredCodeEditor
+        code={code}
+        setCode={setCode}
+        language={language}
+        setLanguage={setLanguage}
+        minHeight="380px"
+        placeholder="// Paste code snippet here or select a Preset Sample above..."
+        extraFooterControls={
+          isApproachingLimit ? (
+            <span className={`badge ${isExceedingLimit ? "badge-danger" : "badge-amber"}`} style={{ fontSize: "0.65rem", padding: "0.15rem 0.4rem" }}>
+              {isExceedingLimit ? "Exceeds 50KB Limit" : "Approaching 50KB Limit"}
             </span>
-            {isApproachingLimit && (
-              <span className={`badge ${isExceedingLimit ? "badge-danger" : "badge-amber"}`} style={{ fontSize: "0.65rem", padding: "0.15rem 0.4rem" }}>
-                {isExceedingLimit ? "Exceeds 50KB Limit" : "Approaching Limit"}
-              </span>
-            )}
-          </div>
-          <button 
-            type="button" 
-            className="btn btn-secondary btn-sm"
-            onClick={() => setCode("")}
-          >
-            Clear Code
-          </button>
-        </div>
-
-        <div className="editor-body">
-          <div className="line-numbers">
-            {lineNumbers.map((num) => (
-              <div key={num}>{num}</div>
-            ))}
-          </div>
-          <textarea
-            className="code-textarea"
-            placeholder="// Paste code snippet here or select a Preset Sample above..."
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            spellCheck={false}
-          />
-        </div>
-      </div>
+          ) : undefined
+        }
+      />
 
       {/* Action Buttons */}
       <div style={{ marginTop: "1.25rem", display: "flex", justifyContent: "flex-end", gap: "0.75rem", flexWrap: "wrap" }}>

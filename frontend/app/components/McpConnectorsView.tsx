@@ -25,7 +25,8 @@ import {
   Key,
   Lock,
   X,
-  KeyRound
+  KeyRound,
+  Clock
 } from "lucide-react";
 
 interface McpServerInfo {
@@ -410,57 +411,27 @@ export default function McpConnectorsView({ onSwitchView }: McpConnectorsViewPro
                     </div>
                   </div>
 
-                  {/* CONNECT / DISCONNECT BUTTON */}
+                  {/* COMING SOON BUTTON */}
                   <div>
-                    {isConnected ? (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDisconnectServer(server.id);
-                        }}
-                        style={{
-                          background: "rgba(34, 197, 94, 0.15)",
-                          border: "1px solid rgba(34, 197, 94, 0.4)",
-                          color: "#4ade80",
-                          padding: "0.3rem 0.75rem",
-                          borderRadius: "8px",
-                          fontSize: "0.78rem",
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "0.35rem"
-                        }}
-                        title="Click to Disconnect Connector"
-                      >
-                        <PlugZap className="w-3.5 h-3.5 text-green-400" /> Connected
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenConnectModal(server);
-                        }}
-                        style={{
-                          background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
-                          border: "none",
-                          color: "#ffffff",
-                          padding: "0.35rem 0.85rem",
-                          borderRadius: "8px",
-                          fontSize: "0.78rem",
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "0.35rem",
-                          boxShadow: "0 4px 12px rgba(99, 102, 241, 0.3)"
-                        }}
-                      >
-                        <Plug className="w-3.5 h-3.5" /> Connect
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      disabled
+                      style={{
+                        background: "rgba(59, 130, 246, 0.15)",
+                        border: "1px solid rgba(59, 130, 246, 0.4)",
+                        color: "#60a5fa",
+                        padding: "0.35rem 0.85rem",
+                        borderRadius: "8px",
+                        fontSize: "0.78rem",
+                        fontWeight: 600,
+                        cursor: "not-allowed",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.35rem"
+                      }}
+                    >
+                      <Clock className="w-3.5 h-3.5 text-blue-400" /> Coming Soon
+                    </button>
                   </div>
                 </div>
 
@@ -470,15 +441,9 @@ export default function McpConnectorsView({ onSwitchView }: McpConnectorsViewPro
 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.78rem", borderTop: "1px solid rgba(255, 255, 255, 0.06)", paddingTop: "0.6rem" }}>
                   <span style={{ color: "#a855f7", fontWeight: 600 }}>{server.tools_count} Registered Tools</span>
-                  {isConnected ? (
-                    <span className="status-badge connected" style={{ fontSize: "0.7rem", padding: "0.15rem 0.5rem" }}>
-                      <span className="status-dot"></span> Active
-                    </span>
-                  ) : (
-                    <span className="status-badge offline" style={{ fontSize: "0.7rem", padding: "0.15rem 0.5rem", background: "rgba(148, 163, 184, 0.15)", color: "#94a3b8" }}>
-                      Disconnected
-                    </span>
-                  )}
+                  <span className="status-badge offline" style={{ fontSize: "0.7rem", padding: "0.15rem 0.5rem", background: "rgba(59, 130, 246, 0.15)", color: "#60a5fa", border: "1px solid rgba(59, 130, 246, 0.3)" }}>
+                    Coming Soon
+                  </span>
                 </div>
               </div>
             );
