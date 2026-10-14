@@ -27,16 +27,51 @@ class CodeValidationError(HTTPException):
 SUPPORTED_LANGUAGES = [
     "python", "django",
     "javascript", "typescript", "react", "nextjs", "nodejs",
-    "java", "c", "cpp", "go", "rust"
+    "java", "c", "cpp", "csharp", "go", "rust",
+    "php", "ruby", "kotlin", "swift", "shell",
+    "sql", "nosql", "html", "css", "json", "yaml"
 ]
+
+LANGUAGE_ALIASES = {
+    "js": "javascript",
+    "ts": "typescript",
+    "py": "python",
+    "golang": "go",
+    "rs": "rust",
+    "c++": "cpp",
+    "c#": "csharp",
+    "cs": "csharp",
+    "sh": "shell",
+    "bash": "shell",
+    "zsh": "shell",
+    "mongodb": "nosql",
+    "mongo": "nosql",
+    "redis": "nosql",
+    "cassandra": "nosql",
+    "cql": "nosql",
+    "neo4j": "nosql",
+    "cypher": "nosql",
+    "postgres": "sql",
+    "postgresql": "sql",
+    "mysql": "sql",
+    "sqlite": "sql",
+    "mssql": "sql",
+    "tsql": "sql",
+    "plsql": "sql",
+    "oracle": "sql",
+    "mariadb": "sql",
+    "snowflake": "sql"
+}
 
 
 def detect_language(code: str, requested_language: str = "auto") -> str:
     """
-    Detects programming language or framework from code snippet using heuristic patterns.
-    Supports C, C++, Python, Django, JavaScript, TypeScript, React, Next.js, Node.js, Java, Go, Rust.
+    Detects programming language, query dialect, or framework from code snippet using heuristic patterns.
+    Supports SQL, NoSQL (MongoDB, Redis, CQL), Python, Django, JavaScript, TypeScript, React, Next.js,
+    Node.js, Java, C, C++, C#, Go, Rust, PHP, Ruby, Kotlin, Swift, Shell, HTML, and CSS.
     """
     cleaned_lang = requested_language.strip().lower() if requested_language else "auto"
+    cleaned_lang = LANGUAGE_ALIASES.get(cleaned_lang, cleaned_lang)
     if cleaned_lang != "auto" and cleaned_lang in SUPPORTED_LANGUAGES:
         return cleaned_lang
 
@@ -60,24 +95,79 @@ def detect_language(code: str, requested_language: str = "auto") -> str:
     if re.search(r"(from\s+django\.|models\.Model|models\.CharField|django\.shortcuts|urlpatterns\s*=|django\.http)", code_text):
         return "django"
 
-    # 2. Language Signals
-    # Rust
-    if re.search(r"(fn\s+\w+|let\s+mut\s+|impl\s+|pub\s+fn|println!|eprintln!|use\s+std::|match\s+\w+|Ok\(|Err\(|#\[derive\()", code_text):
-        return "rust"
+    # 2. Database & Query Languages (SQL & NoSQL)
+    # SQL (DDL, DML, DQL statements, clauses, comments)
+    sql_patterns = [
+        r"\b(?:SELECT\s+[\s\S]+?\s+FROM|INSERT\s+INTO\s+[\w.`\"]+|UPDATE\s+[\w.`\"]+\s+SET|DELETE\s+FROM\s+[\w.`\"]+)\b",
+        r"\b(?:CREATE\s+(?:OR\s+REPLACE\s+)?(?:TABLE|VIEW|INDEX|PROCEDURE|FUNCTION|DATABASE|SCHEMA|TRIGGER)|ALTER\s+TABLE|DROP\s+(?:TABLE|VIEW|INDEX|DATABASE)|TRUNCATE\s+TABLE)\b",
+        r"\b(?:FROM\s+[\w.`\"]+\s+(?:WHERE|JOIN|GROUP\s+BY|ORDER\s+BY|LIMIT))\b",
+        r"^\s*--\s+.*",  # SQL comment
+        r"\b(?:PRIMARY\s+KEY|FOREIGN\s+KEY\s*\([^)]+\)\s*REFERENCES)\b"
+    ]
+    if any(re.search(pat, code_text, re.IGNORECASE | re.MULTILINE) for pat in sql_patterns):
+        # Distinguish pure SQL from code containing SQL strings: check if not typical Python/JS/Go code
+        is_embedded = re.search(r"\b(def\s+\w+|const\s+\w+\s*=|let\s+\w+\s*=|var\s+\w+\s*=|func\s+\w+|package\s+\w+)\b", code_text)
+        if not is_embedded:
+            return "sql"
 
-    # Go
-    if re.search(r"(package\s+\w+|func\s+\w+|func\s+\(|fmt\.|import\s+\(|go\s+func|chan\s+|:=)", code_text):
-        return "go"
+    # NoSQL (MongoDB, Redis, Cassandra CQL, Cypher)
+    nosql_patterns = [
+        r"db\.[a-zA-Z0-9_]+\.(?:find|aggregate|insertOne|insertMany|updateOne|updateMany|deleteOne|deleteMany|countDocuments|distinct|bulkWrite|replaceOne|drop)\s*\(",
+        r"(\$match|\$group|\$project|\$lookup|\$unwind|\$sort|\$limit|\$skip|\$set|\$unset|\$addFields|\$facet|\$bucket|\$in|\$nin|\$gte|\$lte|\$gt|\$lt|\$ne|\$regex|\$exists|\$expr|\$sum|\$push|\$pull|\$addToSet)\b",
+        r"(?:new\s+mongoose\.Schema|mongoose\.model\(|ObjectId\([a-fA-F0-9'\"]+\))",
+        r"^\s*(?:GET|SET|DEL|HGET|HSET|HDEL|HGETALL|LPUSH|RPUSH|LPOP|RPOP|SADD|SMEMBERS|ZADD|ZRANGE|SETEX|INCR|DECR|EXPIRE|TTL)\s+[a-zA-Z0-9_:]+",
+        r"\b(?:KEYSPACE|CLUSTERING\s+ORDER\s+BY|ALLOW\s+FILTERING)\b",
+        r"\bMATCH\s*\([a-zA-Z0-9_:]*\)\s*(?:WHERE\s+.*?|RETURN)\b"
+    ]
+    if any(re.search(pat, code_text, re.IGNORECASE | re.MULTILINE) for pat in nosql_patterns):
+        return "nosql"
 
-    # Java
-    if re.search(r"(public\s+class\s+|public\s+static\s+void\s+main|System\.out\.|import\s+java\.|import\s+javax\.|@Override|@SpringBootApplication)", code_text):
-        return "java"
+    # 3. Markup & Styles (HTML & CSS)
+    if re.search(r"(<!DOCTYPE\s+html|<html\b|<head\b|<body\b|(?:\s*<(?:div|span|section|header|footer|table|form|input|button|h[1-6]|p|ul|ol|li)\b[^>]*>))", code_text, re.IGNORECASE):
+        if not re.search(r"(className=|export\s+default|import\s+)", code_text):
+            return "html"
+    if re.search(r"(@media\s+|(?:\b|\.)[a-zA-Z0-9_-]+\s*\{\s*(?:color|background|margin|padding|display|flex|grid|font-|border-|width|height):)", code_text):
+        return "css"
 
-    # C++ vs C
-    if re.search(r"(#include\s*<(iostream|vector|string|map|set|algorithm|memory|utility|sstream|fstream)>|std::|cout\s*<<|cin\s*>>|namespace\s+\w+|template\s*<|public:|private:|protected:|new\s+\w+\()", code_text):
+    # 4. Shell / Bash (High priority on shebang or shell idioms)
+    if re.search(r"(^#!\/(?:usr\/)?bin\/(?:bash|sh|zsh)|^\s*export\s+[a-zA-Z_][a-zA-Z0-9_]*=|if\s+\[\[?\s+.*?\s+\]\]?;\s*then|chmod\s+[+0-9])", code_text, re.MULTILINE):
+        return "shell"
+
+    # 5. PHP (Distinct PHP opening tags, superglobals, or object arrows)
+    if re.search(r"(<\?php|<\?=|\$this->|\$(?:_GET|_POST|_SESSION|_SERVER|_REQUEST)\b|\$[a-zA-Z_\x80-\xff]\w*\s*->)", code_text):
+        return "php"
+
+    # 6. C++ vs C
+    if re.search(r"(#include\s*<(?:iostream|vector|string|map|set|algorithm|memory|utility|sstream|fstream)>|std::|cout\s*<<|cin\s*>>|using\s+namespace\s+\w+;|template\s*<|public:|private:|protected:|new\s+\w+\()", code_text):
         return "cpp"
     if re.search(r"(#include\s*<[a-zA-Z0-9_/]+\.h>|printf\(|scanf\(|malloc\(|free\(|struct\s+\w+\s*\{|typedef\s+struct|int\s+main\s*\()", code_text):
         return "c"
+
+    # 7. Java vs C#
+    if re.search(r"(public\s+class\s+.*public\s+static\s+void\s+main|System\.out\.|import\s+java\.|import\s+javax\.|@Override|@SpringBootApplication)", code_text, re.DOTALL):
+        return "java"
+    if re.search(r"(using\s+System(?:\.\w+)*;|namespace\s+[A-Za-z0-9_.]+\s*\{|Console\.(?:WriteLine|Write)|Task<\w+>|\[(?:HttpGet|HttpPost|Route|Authorize|Key|Required)\])", code_text):
+        return "csharp"
+
+    # 8. Ruby
+    if re.search(r"(def\s+[a-zA-Z_]\w*(\s*\(.*?\))?\s*(?:#.*)?\n[\s\S]*?\bend\b|attr_accessor|require\s+['\"][^'\"]+['\"]|puts\s+['\"]|class\s+[A-Z]\w*\s*<|\b(?:elsif|unless)\b)", code_text):
+        return "ruby"
+
+    # 9. Rust & Go
+    if re.search(r"(fn\s+\w+|let\s+mut\s+|impl\s+|pub\s+fn|println!|eprintln!|use\s+std::|match\s+\w+|Ok\(|Err\(|#\[derive\()", code_text):
+        return "rust"
+    if re.search(r"(package\s+\w+|func\s+\w+|func\s+\(|fmt\.|import\s+[\"\(]|go\s+func|chan\s+|:=)", code_text):
+        return "go"
+
+    # 10. Kotlin & Swift
+    if re.search(r"(fun\s+[a-zA-Z_]\w*\s*\(|val\s+\w+\s*:\s*\w+|var\s+\w+\s*:\s*\w+|companion\s+object|import\s+kotlin\b)", code_text):
+        return "kotlin"
+    if re.search(r"(import\s+(?:UIKit|SwiftUI|Foundation)|func\s+[a-zA-Z_]\w*\s*\(.*?->|@State\s+private|guard\s+let\b)", code_text):
+        return "swift"
+
+    # 11. Java fallback
+    if re.search(r"(public\s+class\s+|public\s+static\s+void\s+main|System\.out\.|import\s+java\.|import\s+javax\.|@Override|@SpringBootApplication)", code_text):
+        return "java"
 
     # TypeScript
     if re.search(r"(interface\s+\w+|type\s+\w+\s*=|:\s*(string|number|boolean|any|void|unknown|never|object|Array)|as\s+\w+|enum\s+\w+)", code_text):
@@ -103,15 +193,19 @@ def validate_is_code(code: str) -> bool:
     if not stripped:
         return False
 
-    # Check for strong structural markers (keywords, operators, punctuation)
+    # Check for strong structural markers across all supported programming & database languages
     code_markers = [
         r"\b(def|function|fn|func|class|struct|interface|type|import|from|include|public|private|const|let|var|if|else|for|while|return|package)\b",
+        r"\b(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TABLE|FROM|WHERE|JOIN|GROUP\s+BY|ORDER\s+BY|HAVING|LIMIT|OFFSET|VALUES|SET|INDEX|DATABASE|TRIGGER|PROCEDURE)\b",
+        r"\b(db\.\w+|aggregate|find|insertOne|updateOne|deleteOne|\$match|\$group|\$project|\$lookup|\$set|\$in|\$gte|\$lte)\b",
+        r"\b(GET|SET|HSET|HGET|LPUSH|RPUSH|ZADD|SADD|EXPIRE|KEYSPACE|ALLOW\s+FILTERING)\b",
+        r"\b(using|namespace|echo|puts|val|companion|guard|export|chmod)\b",
         r"[{}();=+\-*/%<>&|^!~\[\]]",
         r"(=>|->|==|!=|<=|>=|\+=|-=|\*=|\/=|:=|::)",
-        r"(^\s*#|^\s*\/\/|^\s*\/\*)"
+        r"(^\s*#|^\s*\/\/|^\s*\/\*|^\s*--)"
     ]
 
-    total_matches = sum(len(re.findall(pattern, stripped, re.MULTILINE)) for pattern in code_markers)
+    total_matches = sum(len(re.findall(pattern, stripped, re.MULTILINE | re.IGNORECASE)) for pattern in code_markers)
 
     # Word count vs code marker count check
     words = re.findall(r"\b[a-zA-Z]{2,}\b", stripped)

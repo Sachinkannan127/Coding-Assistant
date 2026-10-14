@@ -137,3 +137,105 @@ def test_line_normalization_and_hash():
     assert res.line_mapping[1] == "def foo():"
     assert res.line_mapping[2] == "    a = 10"
     assert len(res.hash) == 64
+
+
+def test_language_detection_sql_and_nosql():
+    """Verify auto-detection for SQL queries and NoSQL / MongoDB / Redis snippets."""
+    # SQL Queries
+    sql_select = """
+    SELECT u.id, u.username, COUNT(o.id) AS total_orders
+    FROM users u
+    LEFT JOIN orders o ON u.id = o.user_id
+    WHERE u.status = 'active'
+    GROUP BY u.id, u.username
+    ORDER BY total_orders DESC
+    LIMIT 20;
+    """
+    assert detect_language(sql_select) == "sql"
+
+    sql_ddl = """
+    CREATE TABLE employees (
+        id INT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        salary DECIMAL(10, 2)
+    );
+    """
+    assert detect_language(sql_ddl) == "sql"
+
+    sql_update = "UPDATE accounts SET balance = balance - 100 WHERE account_id = 42;"
+    assert detect_language(sql_update) == "sql"
+
+    # SQL Aliases
+    assert detect_language(sql_select, requested_language="postgresql") == "sql"
+    assert detect_language(sql_select, requested_language="mysql") == "sql"
+
+    # NoSQL (MongoDB Aggregation Pipeline)
+    mongo_agg = """
+    db.orders.aggregate([
+        { $match: { status: "completed", orderDate: { $gte: "2024-01-01" } } },
+        { $group: { _id: "$customerId", totalSpent: { $sum: "$amount" } } },
+        { $sort: { totalSpent: -1 } }
+    ]);
+    """
+    assert detect_language(mongo_agg) == "nosql"
+
+    # NoSQL (MongoDB find query)
+    mongo_find = """
+    db.users.find({ age: { $gte: 21 }, role: { $in: ["admin", "editor"] } });
+    """
+    assert detect_language(mongo_find) == "nosql"
+
+    # NoSQL (Redis commands)
+    redis_code = """
+    HSET user:1000 name "Alice" email "alice@example.com"
+    HGETALL user:1000
+    EXPIRE user:1000 3600
+    """
+    assert detect_language(redis_code) == "nosql"
+
+    # NoSQL Aliases
+    assert detect_language(mongo_agg, requested_language="mongodb") == "nosql"
+    assert detect_language(redis_code, requested_language="redis") == "nosql"
+
+
+def test_language_detection_extended_languages():
+    """Verify detection for C#, PHP, Ruby, Shell, HTML, CSS."""
+    csharp_code = """
+    using System;
+    namespace Company.Services {
+        public class PaymentService {
+            public void Process() {
+                Console.WriteLine("Processing payment");
+            }
+        }
+    }
+    """
+    assert detect_language(csharp_code) == "csharp"
+
+    php_code = """
+    <?php
+    $userName = $_GET['user'];
+    echo "Welcome " . htmlspecialchars($userName);
+    """
+    assert detect_language(php_code) == "php"
+
+    ruby_code = """
+    require 'json'
+    class UserReport < BaseReport
+      attr_accessor :title
+      def generate
+        puts "Generating report: #{title}"
+      end
+    end
+    """
+    assert detect_language(ruby_code) == "ruby"
+
+    shell_code = """
+    #!/bin/bash
+    set -e
+    export ENVIRONMENT="production"
+    echo "Deploying application to $ENVIRONMENT..."
+    chmod +x ./build.sh
+    """
+    assert detect_language(shell_code) == "shell"
+

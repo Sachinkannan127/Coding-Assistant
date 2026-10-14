@@ -341,6 +341,12 @@ export default function StructuredCodeEditor({
                 <option value="python">Python 3</option>
                 <option value="javascript">JavaScript</option>
                 <option value="typescript">TypeScript</option>
+                <option value="sql">SQL</option>
+                <option value="nosql">NoSQL</option>
+                <option value="csharp">C#</option>
+                <option value="php">PHP</option>
+                <option value="ruby">Ruby</option>
+                <option value="shell">Shell</option>
                 <option value="c">C</option>
                 <option value="cpp">C++</option>
                 <option value="java">Java</option>

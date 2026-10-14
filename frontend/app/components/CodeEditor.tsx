@@ -159,15 +159,23 @@ export default function CodeEditor({
             <option value="python">Python</option>
             <option value="javascript">JavaScript</option>
             <option value="typescript">TypeScript</option>
-            <option value="react">React JSX/TSX</option>
-            <option value="nextjs">Next.js</option>
-            <option value="nodejs">Node.js</option>
+            <option value="sql">SQL (PostgreSQL, MySQL, SQLite)</option>
+            <option value="nosql">NoSQL (MongoDB, Redis, CQL)</option>
+            <option value="csharp">C# (.NET)</option>
+            <option value="php">PHP</option>
+            <option value="ruby">Ruby</option>
+            <option value="shell">Shell / Bash</option>
             <option value="c">C</option>
             <option value="cpp">C++</option>
             <option value="java">Java</option>
             <option value="go">Go</option>
             <option value="rust">Rust</option>
+            <option value="react">React JSX/TSX</option>
+            <option value="nextjs">Next.js</option>
+            <option value="nodejs">Node.js</option>
             <option value="django">Django</option>
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
           </select>
         </div>
 

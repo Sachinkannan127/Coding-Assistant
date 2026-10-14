@@ -84,6 +84,13 @@ export default function RefactoringDiff({
       python: "py",
       javascript: "js",
       typescript: "ts",
+      sql: "sql",
+      nosql: "json",
+      mongodb: "js",
+      csharp: "cs",
+      php: "php",
+      ruby: "rb",
+      shell: "sh",
       react: "jsx",
       nextjs: "tsx",
       c: "c",
@@ -92,6 +99,10 @@ export default function RefactoringDiff({
       go: "go",
       rust: "rs",
       django: "py",
+      html: "html",
+      css: "css",
+      json: "json",
+      yaml: "yaml",
     };
     const ext = extMap[languageDetected.toLowerCase()] || "txt";
     const filename = `refactored_code.${ext}`;

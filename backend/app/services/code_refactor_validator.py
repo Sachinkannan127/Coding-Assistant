@@ -37,7 +37,41 @@ def validate_syntax(code: str, language: str = "python") -> Tuple[bool, Optional
         except SyntaxError as syn_err:
             return False, f"Python SyntaxError line {syn_err.lineno}: {syn_err.msg}"
 
-    # 2. JavaScript / TypeScript / React / Next.js / Node.js
+    # 2. SQL
+    if lang in ["sql"]:
+        open_parens = cleaned_code.count("(")
+        close_parens = cleaned_code.count(")")
+        if open_parens != close_parens:
+            return False, f"SQL mismatched parentheses: {open_parens} open '(' vs {close_parens} close ')'."
+        return True, None
+
+    # 3. NoSQL (MongoDB, Redis, Cypher, CQL)
+    if lang in ["nosql", "mongodb"]:
+        open_braces = cleaned_code.count("{")
+        close_braces = cleaned_code.count("}")
+        open_parens = cleaned_code.count("(")
+        close_parens = cleaned_code.count(")")
+        open_brackets = cleaned_code.count("[")
+        close_brackets = cleaned_code.count("]")
+
+        if open_braces != close_braces:
+            return False, f"NoSQL mismatched curly braces: {open_braces} open '{{' vs {close_braces} close '}}'."
+        if open_parens != close_parens:
+            return False, f"NoSQL mismatched parentheses: {open_parens} open '(' vs {close_parens} close ')'."
+        if open_brackets != close_brackets:
+            return False, f"NoSQL mismatched square brackets: {open_brackets} open '[' vs {close_brackets} close ']'."
+        return True, None
+
+    # 4. Markup, Styling, & Config (HTML, CSS, JSON, YAML, Shell)
+    if lang in ["html", "css", "shell", "bash", "json", "yaml"]:
+        if lang in ["json", "css"]:
+            open_braces = cleaned_code.count("{")
+            close_braces = cleaned_code.count("}")
+            if open_braces != close_braces:
+                return False, f"{lang.upper()} mismatched curly braces: {open_braces} open vs {close_braces} close."
+        return True, None
+
+    # 5. JavaScript / TypeScript / React / Next.js / Node.js
     if lang in ["javascript", "typescript", "react", "nextjs", "nodejs"]:
         # Bracket & brace balance check
         open_braces = cleaned_code.count("{")
@@ -56,7 +90,7 @@ def validate_syntax(code: str, language: str = "python") -> Tuple[bool, Optional
 
         return True, None
 
-    # 3. C & C++
+    # 6. C & C++
     if lang in ["c", "cpp"]:
         open_braces = cleaned_code.count("{")
         close_braces = cleaned_code.count("}")
@@ -70,7 +104,7 @@ def validate_syntax(code: str, language: str = "python") -> Tuple[bool, Optional
 
         return True, None
 
-    # 4. Generic Fallback (Java, Go, Rust)
+    # 7. Generic Fallback (Java, C#, Go, Rust, PHP, Kotlin, Swift)
     open_braces = cleaned_code.count("{")
     close_braces = cleaned_code.count("}")
     if open_braces != close_braces:
@@ -89,6 +123,17 @@ def verify_signature_preservation(
     """
     lang = language.lower().strip()
 
+    # Query & markup languages do not require standard C/Python style function definitions
+    if lang in ["sql", "nosql", "mongodb", "html", "css", "json", "yaml", "shell", "bash"]:
+        if lang == "sql":
+            orig_procs = set(re.findall(r"CREATE\s+(?:OR\s+REPLACE\s+)?(?:PROCEDURE|FUNCTION)\s+([a-zA-Z_]\w*)", original_code, re.IGNORECASE))
+            refac_procs = set(re.findall(r"CREATE\s+(?:OR\s+REPLACE\s+)?(?:PROCEDURE|FUNCTION)\s+([a-zA-Z_]\w*)", refactored_code, re.IGNORECASE))
+            if orig_procs:
+                missing = orig_procs - refac_procs
+                if missing:
+                    return False, f"Missing SQL procedures/functions in refactored code: {', '.join(sorted(missing))}"
+        return True, None
+
     # Extract function names based on language regex patterns
     if lang in ["python", "django"]:
         orig_funcs = set(re.findall(r"def\s+([a-zA-Z_]\w*)\s*\(", original_code))
@@ -104,8 +149,20 @@ def verify_signature_preservation(
         pattern = r"(?:func|fn)\s+([a-zA-Z_]\w*)"
         orig_funcs = set(re.findall(pattern, original_code))
         refac_funcs = set(re.findall(pattern, refactored_code))
+    elif lang in ["php"]:
+        pattern = r"function\s+([a-zA-Z_]\w*)\s*\("
+        orig_funcs = set(re.findall(pattern, original_code))
+        refac_funcs = set(re.findall(pattern, refactored_code))
+    elif lang in ["ruby"]:
+        pattern = r"def\s+([a-zA-Z_]\w*)"
+        orig_funcs = set(re.findall(pattern, original_code))
+        refac_funcs = set(re.findall(pattern, refactored_code))
+    elif lang in ["kotlin", "swift"]:
+        pattern = r"(?:fun|func)\s+([a-zA-Z_]\w*)\s*\("
+        orig_funcs = set(re.findall(pattern, original_code))
+        refac_funcs = set(re.findall(pattern, refactored_code))
     else:
-        # C, C++, Java or generic
+        # C, C++, C#, Java or generic
         pattern = r"\b[a-zA-Z_]\w*\s+([a-zA-Z_]\w*)\s*\("
         orig_funcs = set(re.findall(pattern, original_code)) - {"if", "for", "while", "switch", "main"}
         refac_funcs = set(re.findall(pattern, refactored_code)) - {"if", "for", "while", "switch", "main"}
